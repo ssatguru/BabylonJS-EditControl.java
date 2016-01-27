@@ -103,7 +103,7 @@ editControl.setRotSnapValue(number n in radians);
 ```
 7) To switch edit control to another mesh
 ```
-editControl.swicthTo(Mesh mesh);
+editControl.switchTo(Mesh mesh);
 ```
 This quickly removes control from one mesh and attaches it to anotehr mesh.
 
