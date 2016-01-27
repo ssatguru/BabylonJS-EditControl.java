@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EditControl Demo</title>
+<style>
+html, body {
+	overflow: hidden;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+#renderCanvas {
+	width: 100%;
+	height: 100%;
+	touch-action: none;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/handjs/1.3.8/hand.min.js"></script>
+<script src="https://cdn.jsdelivr.net/babylonjs/2.2/babylon.min.js"></script>
+<script src="js/org/ssatguru/babylonjs/component/EditControl.js"></script>
+</head>
+<body>
+
+	<button id="trans">translate</button>
+	<button id="rotate">rotate</button>
+	<button id="scale">scale</button>
+	<input type="checkbox" id="local" checked>local
+	<input type="checkbox" id="snaptrans">snap translation
+	<input type="checkbox" id="snaprot">snap rotation
+
+	<canvas id="renderCanvas"></canvas>
+
+	<script type="text/javascript">
+		var box;
+		var editControl;
+
+		var transButton = document.getElementById("trans");
+		var rotButton = document.getElementById("rotate");
+		var scaleButton = document.getElementById("scale");
+		var localButton = document.getElementById("local");
+		var snapTButton = document.getElementById("snaptrans");
+		var snapRButton = document.getElementById("snaprot");
+		snapTButton.checked = false;
+		snapRButton.checked = false;
+
+		
+		transButton.onclick = function() {
+			editControl.enableTranslation()
+		};
+		rotButton.onclick = function() {
+			editControl.enableRotation()
+		};
+		scaleButton.onclick = function() {
+			editControl.enableScaling()
+		};
+		localButton.onclick = function() {
+			editControl.setLocal(localButton.checked)
+		};
+		snapTButton.onclick = function() {
+			editControl.setTransSnap(snapTButton.checked)
+		};
+		snapRButton.onclick = function() {
+			editControl.setRotSnap(snapRButton.checked)
+		};
+
+		var canvas = document.querySelector("#renderCanvas");
+
+		var engine = new BABYLON.Engine(canvas, true);
+
+		var createScene = function() {
+			
+			var scene = new BABYLON.Scene(engine);
+			
+			scene.clearColor = new BABYLON.Color3(0.75, 0.75, 0.75);
+
+			var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", 1, 1.2,
+					20, new BABYLON.Vector3(0, 0, 0), scene);
+			camera.wheelPrecision = 15;
+			camera.setTarget(BABYLON.Vector3.Zero());
+			camera.attachControl(canvas, false);
+			
+			var light = new BABYLON.HemisphericLight("light1",
+					new BABYLON.Vector3(0, 1, 0), scene);
+			light.intensity = .5;
+			
+			box = BABYLON.Mesh.CreateBox("box", 2, scene);
+
+			box.position = new BABYLON.Vector3(0, 1, 0);
+
+			var ground = BABYLON.Mesh
+					.CreateGround("ground1", 20, 20, 10, scene);
+			var gridMaterial = new BABYLON.StandardMaterial("Grid Material",
+					scene);
+			gridMaterial.wireframe = true;
+			ground.material = gridMaterial;
+
+			//------------------EDIT COTROL -------------------------------------------------
+			var EditControl = org.ssatguru.babylonjs.component.EditControl;
+			//create edit control (mesh to attach to, canvas, scale of editcontrol)
+			editControl = new EditControl(box,camera, canvas, 0.75);
+			//enable translation controls
+			editControl.enableTranslation();
+			//set rotational snap valie in radians
+			editControl.setRotSnapValue(3.14/18);
+			//set transalation sna value in meters
+			editControl.setTransSnapValue(0.5);
+
+			return scene;
+		};
+		var scene = createScene();
+
+		engine.runRenderLoop(function() {
+			scene.render();
+		});
+		window.addEventListener("resize", function() {
+			engine.resize();
+		});
+	</script>
+</body>
+</html>

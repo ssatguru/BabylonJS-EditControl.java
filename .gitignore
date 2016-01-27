@@ -1,0 +1,10 @@
+/bin/
+/target/
+/.jsweet
+/.settings
+/.ts
+.classpath
+.project
+*.blend1
+*.log
+
