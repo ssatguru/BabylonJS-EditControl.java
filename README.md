@@ -39,8 +39,8 @@ You can find the "EditControl.js" here
 ```
 //------------------EDIT CONTROL -------------------------------------------------
 var EditControl = org.ssatguru.babylonjs.component.EditControl;
-//create edit control (mesh to attach to, canvas, scale of editcontrol)
-editControl = new EditControl(box, canvas, 0.75);
+//create edit control (mesh to attach to, active camera, canvas, scale of editcontrol)
+editControl = new EditControl(box,camera, canvas, 0.75);
 //enable translation controls
 editControl.enableTranslation();
 //set transalation sna value in meters
@@ -103,7 +103,7 @@ editControl.setRotSnapValue(number n in radians);
 ```
 7) To switch edit control to another mesh
 ```
-editControl.swicthTo(Mesh mesh);
+editControl.switchTo(Mesh mesh);
 ```
 This quickly removes control from one mesh and attaches it to anotehr mesh.
 
