@@ -8,6 +8,7 @@ import def.babylonjs.babylon.Axis;
 import def.babylonjs.babylon.Camera;
 import def.babylonjs.babylon.Color3;
 import def.babylonjs.babylon.LinesMesh;
+import def.babylonjs.babylon.Material;
 import def.babylonjs.babylon.Matrix;
 import def.babylonjs.babylon.Mesh;
 import def.babylonjs.babylon.PickingInfo;
@@ -34,16 +35,17 @@ public class EditControl {
 	private double rotSnap = Math.PI / 18;// 10 degree
 	private double axesLen = 0.4;
 	private double axesScale = 1;
-	private StandardMaterial redMat, greenMat, blueMat, whiteMat;
+	private StandardMaterial redMat, greenMat, blueMat, whiteMat, yellowMat;
 
-	public EditControl(Mesh mesh, Camera camera,  HTMLCanvasElement canvas, double scale) {
+	public EditControl(Mesh mesh, Camera camera, HTMLCanvasElement canvas, double scale) {
 		this.meshPicked = mesh;
 		this.canvas = canvas;
 		this.axesScale = scale;
-		
+
 		this.scene = mesh.getScene();
-		//this.mainCamera = scene.activeCamera;
 		this.mainCamera = camera;
+
+		mesh.computeWorldMatrix(true);
 
 		theParent = new Mesh("EditControl", this.scene);
 		theParent.position = this.meshPicked.position;
@@ -108,28 +110,36 @@ public class EditControl {
 					return true;
 			}
 			return false;
-		},null,this.mainCamera);
+		} , null, this.mainCamera);
 		if (pickResult.hit) {
 			setAxisVisiblity(0);
 			this.axisPicked = (Mesh) pickResult.pickedMesh;
 			((Mesh) this.axisPicked.getChildren()[0]).visibility = 1;
+			String name = this.axisPicked.name;
+			if (name == "X") this.bXaxis.visibility=1;
+			else if (name == "Y") this.bYaxis.visibility=1;
+			else if (name == "Z") this.bZaxis.visibility=1;
+			else if (name == "ALL"){
+				this.bXaxis.visibility=1;
+				this.bYaxis.visibility=1;
+				this.bZaxis.visibility=1;
+			}
+			
 			this.editing = true;
-			this.pickPlane.isPickable = true;
 			this.prevPos = getPosOnPickPlane();
-			//this.mainCamera.detachControl(this.canvas);
-			window.setTimeout(function(this::detachControl), 0, this.mainCamera,this.canvas);
+			window.setTimeout(function(this::detachControl), 0, this.mainCamera, this.canvas);
 		}
 
 	}
-	
-	 private void detachControl(Object cam, Object can){
-          Camera camera = (Camera) cam;
-         HTMLCanvasElement canvas = (HTMLCanvasElement) can;
-         camera.detachControl(canvas);
-  }
+
+	private void detachControl(Object cam, Object can) {
+		Camera camera = (Camera) cam;
+		HTMLCanvasElement canvas = (HTMLCanvasElement) can;
+		camera.detachControl(canvas);
+	}
 
 	private Mesh prevOverMesh;
-
+	
 	private void onPointerOver() {
 		if (this.pDown)
 			return;
@@ -147,16 +157,23 @@ public class EditControl {
 					return true;
 			}
 			return false;
-		},null,this.mainCamera);
+		} , null, this.mainCamera);
 		if (pickResult.hit) {
 			if ((Mesh) pickResult.pickedMesh != this.prevOverMesh) {
+				if (this.prevOverMesh != null) {
+					this.prevOverMesh.visibility = 0;
+				}
 				this.prevOverMesh = (Mesh) pickResult.pickedMesh;
-				setAxisVisiblity(0);
-				((Mesh) this.prevOverMesh.getChildren()[0]).visibility = 1;
+				this.prevOverMesh.visibility = 0.1;
+				// setAxisVisiblity(0);
+				// ((Mesh) this.prevOverMesh.getChildren()[0]).visibility = 1;
+
 			}
 		} else {
 			if (this.prevOverMesh != null) {
-				setAxisVisiblity(1);
+				// setAxisVisiblity(1);
+				this.prevOverMesh.visibility = 0;
+				this.prevOverMesh.renderOutline = false;
 				this.prevOverMesh = null;
 			}
 		}
@@ -170,9 +187,11 @@ public class EditControl {
 		if (editing) {
 			this.mainCamera.attachControl(this.canvas);
 			editing = false;
-			this.pickPlane.isPickable = false;
 			setAxisVisiblity(1);
+			hideBaxis();
+			this.prevOverMesh.visibility=0;
 			this.prevOverMesh = null;
+			
 		}
 	}
 
@@ -283,7 +302,7 @@ public class EditControl {
 		Vector3 npm = newPos.subtract(this.meshPicked.position);
 		Vector3 diff = newPos.subtract(prevPos);
 		double r = diff.length() / ppm.length();
-		//double r = diff.length() / 10;
+		// double r = diff.length() / 10;
 		if (this.axisPicked == this.sX) {
 			double dot = Vector3.Dot(diff, localX);
 			if (dot >= 0)
@@ -317,7 +336,6 @@ public class EditControl {
 	}
 
 	private void doRotation(Vector3 newPos) {
-
 		Vector3 cN = Vector3.TransformNormal(Axis.Z, this.mainCamera.getWorldMatrix());
 		if (this.axisPicked == this.rX) {
 			double angle = getAngle(prevPos, newPos, this.meshPicked.position, cN);
@@ -380,14 +398,17 @@ public class EditControl {
 				this.meshPicked.rotate(new Vector3(0, 0, cN.z), angle, Space.WORLD);
 			setLocalAxes(this.meshPicked);
 		}
+		// babylonjs reset euler to zero when rotate() is used.
+		// restore euler value for those expecting it
+		this.meshPicked.rotation = this.meshPicked.rotationQuaternion.toEulerAngles();
 
 	}
 
 	private Vector3 getPosOnPickPlane() {
 		PickingInfo pickinfo = scene.pick(scene.pointerX, scene.pointerY, (mesh) -> {
 			return mesh == this.pickPlane;
-		},null,this.mainCamera);
-		
+		} , null, this.mainCamera);
+
 		if (pickinfo.hit) {
 			return pickinfo.pickedPoint;
 		} else {
@@ -395,8 +416,14 @@ public class EditControl {
 		}
 
 	}
+	private void hideBaxis() {
+		this.bXaxis.visibility=0;
+		this.bYaxis.visibility=0;
+		this.bZaxis.visibility=0;
+	}
 
 	private void setAxisVisiblity(double v) {
+		
 		if (transEnabled) {
 			this.tEndX.visibility = v;
 			this.tEndY.visibility = v;
@@ -502,7 +529,7 @@ public class EditControl {
 		}
 	}
 
-	private LinesMesh xaxis, yaxis, zaxis;
+	private LinesMesh bXaxis, bYaxis, bZaxis, xaxis, yaxis, zaxis;
 	private Mesh guideCtl;
 
 	private void createGuideAxes() {
@@ -510,9 +537,29 @@ public class EditControl {
 
 		guideCtl = new Mesh("guideCtl", this.scene);
 
+		bXaxis = Mesh.CreateLines("xAxis", new Vector3[] { new Vector3(-100, 0, 0), new Vector3(100, 0, 0) }, scene);
+		bYaxis = Mesh.CreateLines("yAxis", new Vector3[] { new Vector3(0, -100, 0), new Vector3(0, 100, 0) }, scene);
+		bZaxis = Mesh.CreateLines("zAxis", new Vector3[] { new Vector3(0, 0, -100), new Vector3(0, 0, 100) }, scene);
+		this.bXaxis.parent = this.guideCtl;
+		this.bYaxis.parent = this.guideCtl;
+		this.bZaxis.parent = this.guideCtl;
+		
+		
+
+		bXaxis.color = Color3.Red();
+		bYaxis.color = Color3.Green();
+		bZaxis.color = Color3.Blue();
+		
+		bXaxis.renderingGroupId = 1;
+		bYaxis.renderingGroupId = 1;
+		bZaxis.renderingGroupId = 1;
+
+		hideBaxis();
+		
 		xaxis = Mesh.CreateLines("xAxis", new Vector3[] { new Vector3(0, 0, 0), new Vector3(l, 0, 0) }, scene);
 		yaxis = Mesh.CreateLines("yAxis", new Vector3[] { new Vector3(0, 0, 0), new Vector3(0, l, 0) }, scene);
 		zaxis = Mesh.CreateLines("zAxis", new Vector3[] { new Vector3(0, 0, 0), new Vector3(0, 0, l) }, scene);
+		
 		this.xaxis.parent = this.guideCtl;
 		this.yaxis.parent = this.guideCtl;
 		this.zaxis.parent = this.guideCtl;
@@ -530,7 +577,7 @@ public class EditControl {
 	private Mesh pickPlane;
 
 	private void createPickPlane() {
-		this.pickPlane = Mesh.CreatePlane("axisPlane", 20, this.scene);
+		this.pickPlane = Mesh.CreatePlane("axisPlane", 200, this.scene);
 		this.pickPlane.isPickable = false;
 		this.pickPlane.visibility = 0;
 		this.pickPlane.billboardMode = Mesh.BILLBOARDMODE_ALL;
@@ -541,16 +588,20 @@ public class EditControl {
 	private Mesh tCtl, tX, tY, tZ, tEndX, tEndY, tEndZ;
 
 	private void createTransAxes() {
-		
+
 		double r = 0.04;
 		double l = this.axesLen * this.axesScale;
-	
+
 		tCtl = new Mesh("tarnsCtl", this.scene);
 
 		this.tX = extrudeBox(r / 2, l);
-		this.tX.name = "transX";
-		this.tY = this.tX.clone("transY");
-		this.tZ = this.tX.clone("transZ");
+		this.tX.name = "X";
+		this.tY = this.tX.clone("Y");
+		this.tZ = this.tX.clone("Z");
+		
+		this.tX.material = this.redMat;
+		this.tY.material = this.greenMat;
+		this.tZ.material = this.blueMat;
 
 		this.tX.parent = this.tCtl;
 		this.tY.parent = this.tCtl;
@@ -567,45 +618,56 @@ public class EditControl {
 		this.tY.renderingGroupId = 1;
 		this.tZ.renderingGroupId = 1;
 
+		this.tX.isPickable = false;
+		this.tY.isPickable = false;
+		this.tZ.isPickable = false;
+
 		double cl = l * this.axesScale / 4, cr = r * this.axesScale;
-		tEndX = Mesh.CreateCylinder("tEndX", cl, 0, cr, 6, 1, this.scene);
-		tEndY = tEndX.clone("tEndY");
-		tEndZ = tEndX.clone("tEndZ");
+		this.tEndX = Mesh.CreateCylinder("tEndX", cl, 0, cr, 6, 1, this.scene);
+		this.tEndY = tEndX.clone("tEndY");
+		this.tEndZ = tEndX.clone("tEndZ");
 
-		tEndX.rotation.x = 1.57;
-		tEndY.rotation.x = 1.57;
-		tEndZ.rotation.x = 1.57;
+		this.tEndX.rotation.x = 1.57;
+		this.tEndY.rotation.x = 1.57;
+		this.tEndZ.rotation.x = 1.57;
 
-		tEndX.parent = this.tX;
-		tEndY.parent = this.tY;
-		tEndZ.parent = this.tZ;
+		this.tEndX.parent = this.tX;
+		this.tEndY.parent = this.tY;
+		this.tEndZ.parent = this.tZ;
 
-		tEndX.position.z = l - cl / 2;
-		tEndY.position.z = l - cl / 2;
-		tEndZ.position.z = l - cl / 2;
+		this.tEndX.position.z = l - cl / 2;
+		this.tEndY.position.z = l - cl / 2;
+		this.tEndZ.position.z = l - cl / 2;
 
-		tEndX.material = redMat;
-		tEndY.material = greenMat;
-		tEndZ.material = blueMat;
+		this.tEndX.material = redMat;
+		this.tEndY.material = greenMat;
+		this.tEndZ.material = blueMat;
 
-		tEndX.renderingGroupId = 1;
-		tEndY.renderingGroupId = 1;
-		tEndZ.renderingGroupId = 1;
+		this.tEndX.renderingGroupId = 1;
+		this.tEndY.renderingGroupId = 1;
+		this.tEndZ.renderingGroupId = 1;
+
+		this.tEndX.isPickable = false;
+		this.tEndY.isPickable = false;
+		this.tEndZ.isPickable = false;
 
 	}
 
-
-	Mesh rCtl, rX, rY, rZ ;
+	Mesh rCtl, rX, rY, rZ;
 	LinesMesh rEndX, rEndY, rEndZ;
-	
+
 	private void createRotAxes() {
 		double r = 0.04;
 		double d = this.axesLen * this.axesScale * 2;
 		this.rCtl = new Mesh("rotCtl", this.scene);
 
-		this.rX = Mesh.CreateTorus("", d, r, 20, this.scene);
-		this.rY = rX.clone("");
-		this.rZ = rX.clone("");
+		this.rX = Mesh.CreateTorus("X", d, r, 30, this.scene);
+		this.rY = rX.clone("Y");
+		this.rZ = rX.clone("Z");
+		
+		this.rX.material = this.redMat;
+		this.rY.material = this.greenMat;
+		this.rZ.material = this.blueMat;
 
 		this.rX.parent = this.rCtl;
 		this.rY.parent = this.rCtl;
@@ -622,22 +684,24 @@ public class EditControl {
 		this.rY.renderingGroupId = 1;
 		this.rZ.renderingGroupId = 1;
 
+		this.rX.isPickable = false;
+		this.rY.isPickable = false;
+		this.rZ.isPickable = false;
+
 		double cl = d, cr = r / 8;
 
-		
-		rEndX = createCircle(cl/2);
-		rEndY= rEndX.clone("");
-		rEndZ= rEndX.clone("");
+		rEndX = createCircle(cl / 2);
+		rEndY = rEndX.clone("");
+		rEndZ = rEndX.clone("");
 
 		rEndX.parent = this.rX;
 		rEndY.parent = this.rY;
 		rEndZ.parent = this.rZ;
-		
-		rEndX.rotation.x=1.57;
-		rEndY.rotation.x=1.57;
-		rEndZ.rotation.x=1.57;
 
-		
+		rEndX.rotation.x = 1.57;
+		rEndY.rotation.x = 1.57;
+		rEndZ.rotation.x = 1.57;
+
 		rEndX.color = Color3.Red();
 		rEndY.color = Color3.Green();
 		rEndZ.color = Color3.Blue();
@@ -646,13 +710,17 @@ public class EditControl {
 		rEndY.renderingGroupId = 1;
 		rEndZ.renderingGroupId = 1;
 
+		rEndX.isPickable = false;
+		rEndY.isPickable = false;
+		rEndZ.isPickable = false;
+
 	}
 
 	private Mesh extrudeBox(double w, double l) {
 		Vector3[] shape = new Vector3[] { new Vector3(w, w, 0), new Vector3(-w, w, 0), new Vector3(-w, -w, 0),
 				new Vector3(w, -w, 0), new Vector3(w, w, 0) };
 		Vector3[] path = new Vector3[] { new Vector3(0, 0, 0), new Vector3(0, 0, l) };
-		Mesh box = Mesh.ExtrudeShape("", shape, path, 1, 0, 0, this.scene);
+		Mesh box = Mesh.ExtrudeShape("", shape, path, 1, 0, 2, this.scene);
 		return box;
 	}
 
@@ -660,7 +728,7 @@ public class EditControl {
 		Vector3[] points = new Vector3[36];
 		double x, y;
 		double a = 3.14 / 180;
-		int p=0;
+		int p = 0;
 		for (int i = 0; i <= 360; i = i + 10) {
 			x = r * Math.cos(i * a);
 			if (i == 90)
@@ -670,10 +738,10 @@ public class EditControl {
 			else
 				y = r * Math.sin(i * a);
 
-			points[p]= new Vector3(x,y,0);
+			points[p] = new Vector3(x, y, 0);
 			p++;
 		}
-		LinesMesh circle = Mesh.CreateLines("",points, this.scene);
+		LinesMesh circle = Mesh.CreateLines("", points, this.scene);
 		return circle;
 	}
 
@@ -684,13 +752,18 @@ public class EditControl {
 		double l = this.axesLen * this.axesScale;
 
 		sCtl = new Mesh("sCtl", this.scene);
-		this.sAll = Mesh.CreateBox("", r * 2, this.scene);
+		this.sAll = Mesh.CreateBox("ALL", r * 2, this.scene);
 
 		this.sX = extrudeBox(r / 2, l);
-		this.sX.name = "scaleX";
-		this.sY = this.sX.clone("scaleY");
-		this.sZ = this.sX.clone("scaleZ");
-
+		this.sX.name = "X";
+		this.sY = this.sX.clone("Y");
+		this.sZ = this.sX.clone("Z");
+		
+		this.sX.material = this.redMat;
+		this.sY.material = this.greenMat;
+		this.sZ.material = this.blueMat;
+		this.sAll.material = this.whiteMat;
+		
 		this.sX.parent = this.sCtl;
 		this.sY.parent = this.sCtl;
 		this.sZ.parent = this.sCtl;
@@ -709,38 +782,48 @@ public class EditControl {
 		this.sZ.renderingGroupId = 1;
 		this.sAll.renderingGroupId = 1;
 
+		this.sX.isPickable = false;
+		this.sY.isPickable = false;
+		this.sZ.isPickable = false;
+		this.sAll.isPickable = false;
+
 		double cr = r * this.axesScale;
 		sEndX = Mesh.CreateBox("", cr, this.scene);
 		sEndY = sEndX.clone("");
 		sEndZ = sEndX.clone("");
 		sEndAll = sEndX.clone("");
-		
-		sEndX.parent = this.sX;
-		sEndY.parent = this.sY;
-		sEndZ.parent = this.sZ;
-		sEndAll.parent = this.sAll;
 
-		sEndX.position.z = l - cr / 2;
-		sEndY.position.z = l - cr / 2;
-		sEndZ.position.z = l - cr / 2;
+		this.sEndX.parent = this.sX;
+		this.sEndY.parent = this.sY;
+		this.sEndZ.parent = this.sZ;
+		this.sEndAll.parent = this.sAll;
 
-		sEndX.material = this.redMat;
-		sEndY.material = this.greenMat;
-		sEndZ.material = this.blueMat;
-		sEndAll.material = this.whiteMat;
+		this.sEndX.position.z = l - cr / 2;
+		this.sEndY.position.z = l - cr / 2;
+		this.sEndZ.position.z = l - cr / 2;
 
-		sEndX.renderingGroupId = 1;
-		sEndY.renderingGroupId = 1;
-		sEndZ.renderingGroupId = 1;
-		sEndAll.renderingGroupId = 1;
+		this.sEndX.material = this.redMat;
+		this.sEndY.material = this.greenMat;
+		this.sEndZ.material = this.blueMat;
+		this.sEndAll.material = this.whiteMat;
+
+		this.sEndX.renderingGroupId = 1;
+		this.sEndY.renderingGroupId = 1;
+		this.sEndZ.renderingGroupId = 1;
+		this.sEndAll.renderingGroupId = 1;
+
+		this.sEndX.isPickable = false;
+		this.sEndY.isPickable = false;
+		this.sEndZ.isPickable = false;
+		this.sEndAll.isPickable = false;
 
 	}
 
 	Vector3 localX, localY, localZ, localRot;
 
 	private void setLocalAxes(Mesh mesh) {
-		// Matrix meshMatrix = mesh.getWorldMatrix();
-		Matrix meshMatrix = mesh.computeWorldMatrix(true);
+		Matrix meshMatrix = mesh.getWorldMatrix();
+		// Matrix meshMatrix = mesh.computeWorldMatrix(true);
 		Vector3 pos = mesh.position;
 		localX = Vector3.TransformCoordinates(Axis.X, meshMatrix).subtract(pos);
 		localY = Vector3.TransformCoordinates(Axis.Y, meshMatrix).subtract(pos);
@@ -800,19 +883,21 @@ public class EditControl {
 		}
 		return angle;
 	}
-	
-	private void createMaterials(Scene scene){
-		this.redMat = getStandardMaterial("redMat", Color3.Red(), scene) ;
-		this.greenMat = getStandardMaterial("greenMat", Color3.Green(), scene) ;
-		this.blueMat = getStandardMaterial("blueMat", Color3.Blue(), scene) ;
-		this.whiteMat = getStandardMaterial("whiteMat", Color3.White(), scene) ;
+
+	private void createMaterials(Scene scene) {
+		this.redMat = getStandardMaterial("redMat", Color3.Red(), scene);
+		this.greenMat = getStandardMaterial("greenMat", Color3.Green(), scene);
+		this.blueMat = getStandardMaterial("blueMat", Color3.Blue(), scene);
+		this.whiteMat = getStandardMaterial("whiteMat", Color3.White(), scene);
+		this.yellowMat = getStandardMaterial("whiteMat", Color3.Yellow(), scene);
 	}
-	
-	private void disposeMaterials(){
+
+	private void disposeMaterials() {
 		this.redMat.dispose();
 		this.greenMat.dispose();
 		this.blueMat.dispose();
 		this.whiteMat.dispose();
+		this.yellowMat.dispose();
 	}
 
 	private static StandardMaterial getStandardMaterial(String name, Color3 col, Scene scene) {
@@ -823,4 +908,3 @@ public class EditControl {
 		return mat;
 	}
 }
-

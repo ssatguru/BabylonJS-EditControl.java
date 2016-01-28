@@ -12,24 +12,55 @@ html, body {
 	padding: 0;
 }
 
+#controls {
+	position: absolute;
+	left: 10px;
+	top: 10px;
+}
+
 #renderCanvas {
 	width: 100%;
 	height: 100%;
 	touch-action: none;
 }
+
+#overlay {
+	visibility: hidden;
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	z-index: 1000;
+}
+
+#overlay div {
+	width: 400px;
+	margin: 100px auto;
+	background-color: #fff;
+	border: 1px solid #000;
+	padding: 15px;
+	text-align: center;
+}
 </style>
+
 <script src="https://cdn.jsdelivr.net/handjs/1.3.8/hand.min.js"></script>
 <script src="https://cdn.jsdelivr.net/babylonjs/2.2/babylon.min.js"></script>
 <script src="js/org/ssatguru/babylonjs/component/EditControl.js"></script>
-</head>
-<body>
 
-	<button id="trans">translate</button>
-	<button id="rotate">rotate</button>
-	<button id="scale">scale</button>
-	<input type="checkbox" id="local" checked>local
-	<input type="checkbox" id="snaptrans">snap translation
-	<input type="checkbox" id="snaprot">snap rotation
+</head>
+
+<body>
+	<div id="controls">
+		<input type="checkbox" id="local" checked>local
+		<button id="trans">translate</button>
+		<button id="rotate">rotate</button>
+		<button id="scale">scale</button>
+		<input type="checkbox" id="snaptrans">snap translation 
+		<input type="checkbox" id="snaprot">snap rotation
+		<button id="help" style="float: right;">Help</button>
+	</div>
 
 	<canvas id="renderCanvas"></canvas>
 
@@ -37,6 +68,7 @@ html, body {
 		var box;
 		var editControl;
 
+		var helpButton = document.getElementById("help");
 		var transButton = document.getElementById("trans");
 		var rotButton = document.getElementById("rotate");
 		var scaleButton = document.getElementById("scale");
@@ -46,7 +78,14 @@ html, body {
 		snapTButton.checked = false;
 		snapRButton.checked = false;
 
-		
+		var showHelp = function() {
+			var el = document.getElementById("overlay");
+			el.style.visibility = (el.style.visibility == "visible") ? "hidden"
+					: "visible";
+		}
+
+		helpButton.onclick = showHelp;
+
 		transButton.onclick = function() {
 			editControl.enableTranslation()
 		};
@@ -71,9 +110,9 @@ html, body {
 		var engine = new BABYLON.Engine(canvas, true);
 
 		var createScene = function() {
-			
+
 			var scene = new BABYLON.Scene(engine);
-			
+
 			scene.clearColor = new BABYLON.Color3(0.75, 0.75, 0.75);
 
 			var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", 1, 1.2,
@@ -81,11 +120,11 @@ html, body {
 			camera.wheelPrecision = 15;
 			camera.setTarget(BABYLON.Vector3.Zero());
 			camera.attachControl(canvas, false);
-			
+
 			var light = new BABYLON.HemisphericLight("light1",
 					new BABYLON.Vector3(0, 1, 0), scene);
 			light.intensity = .5;
-			
+
 			box = BABYLON.Mesh.CreateBox("box", 2, scene);
 
 			box.position = new BABYLON.Vector3(0, 1, 0);
@@ -100,11 +139,11 @@ html, body {
 			//------------------EDIT COTROL -------------------------------------------------
 			var EditControl = org.ssatguru.babylonjs.component.EditControl;
 			//create edit control (mesh to attach to, canvas, scale of editcontrol)
-			editControl = new EditControl(box,camera, canvas, 0.75);
+			editControl = new EditControl(box, camera, canvas, 0.75);
 			//enable translation controls
 			editControl.enableTranslation();
 			//set rotational snap valie in radians
-			editControl.setRotSnapValue(3.14/18);
+			editControl.setRotSnapValue(3.14 / 18);
 			//set transalation sna value in meters
 			editControl.setTransSnapValue(0.5);
 
@@ -119,5 +158,18 @@ html, body {
 			engine.resize();
 		});
 	</script>
+
+	<div id="overlay">
+		<div>
+			<h2>Demo of EditControl for Babylonjs</h2>
+			<p>
+				For more information and source code head on over to <br>
+				<a href="https://github.com/ssatguru/Babylonjs-EditControl"
+					target='link'>
+					https://github.com/ssatguru/Babylonjs-EditControl</a>
+			</p>
+			<button id="closehelp" onclick="showHelp();">close</button>
+		</div>
+	</div>
 </body>
 </html>

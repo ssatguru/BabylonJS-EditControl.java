@@ -8,6 +8,8 @@ module org.ssatguru.babylonjs.component {
 
     import LinesMesh = BABYLON.LinesMesh;
 
+    import Material = BABYLON.Material;
+
     import Matrix = BABYLON.Matrix;
 
     import Mesh = BABYLON.Mesh;
@@ -55,12 +57,15 @@ module org.ssatguru.babylonjs.component {
 
         private whiteMat: StandardMaterial;
 
+        private yellowMat: StandardMaterial;
+
         public constructor(mesh: Mesh, camera: Camera, canvas: HTMLCanvasElement, scale: number)  {
             this.meshPicked = mesh;
             this.canvas = canvas;
             this.axesScale = scale;
             this.scene = mesh.getScene();
             this.mainCamera = camera;
+            mesh.computeWorldMatrix(true);
             this.theParent = new Mesh("EditControl", this.scene);
             this.theParent.position = this.meshPicked.position;
             this.theParent.visibility = 0;
@@ -119,8 +124,13 @@ module org.ssatguru.babylonjs.component {
                 this.setAxisVisiblity(0);
                 this.axisPicked = <Mesh>pickResult.pickedMesh;
                 (<Mesh>this.axisPicked.getChildren()[0]).visibility = 1;
+                var name: string = this.axisPicked.name;
+                if((name == "X")) this.bXaxis.visibility = 1; else if((name == "Y")) this.bYaxis.visibility = 1; else if((name == "Z")) this.bZaxis.visibility = 1; else if((name == "ALL")) {
+                    this.bXaxis.visibility = 1;
+                    this.bYaxis.visibility = 1;
+                    this.bZaxis.visibility = 1;
+                }
                 this.editing = true;
-                this.pickPlane.isPickable = true;
                 this.prevPos = this.getPosOnPickPlane();
                 window.setTimeout(((cam,can) => { return this.detachControl(cam,can) }), 0, this.mainCamera, this.canvas);
             }
@@ -148,13 +158,16 @@ module org.ssatguru.babylonjs.component {
             }, null, this.mainCamera);
             if((pickResult.hit)) {
                 if((<Mesh>pickResult.pickedMesh != this.prevOverMesh)) {
+                    if((this.prevOverMesh != null)) {
+                        this.prevOverMesh.visibility = 0;
+                    }
                     this.prevOverMesh = <Mesh>pickResult.pickedMesh;
-                    this.setAxisVisiblity(0);
-                    (<Mesh>this.prevOverMesh.getChildren()[0]).visibility = 1;
+                    this.prevOverMesh.visibility = 0.1;
                 }
             } else {
                 if((this.prevOverMesh != null)) {
-                    this.setAxisVisiblity(1);
+                    this.prevOverMesh.visibility = 0;
+                    this.prevOverMesh.renderOutline = false;
                     this.prevOverMesh = null;
                 }
             }
@@ -167,8 +180,9 @@ module org.ssatguru.babylonjs.component {
             if((this.editing)) {
                 this.mainCamera.attachControl(this.canvas);
                 this.editing = false;
-                this.pickPlane.isPickable = false;
                 this.setAxisVisiblity(1);
+                this.hideBaxis();
+                this.prevOverMesh.visibility = 0;
                 this.prevOverMesh = null;
             }
         }
@@ -318,6 +332,7 @@ module org.ssatguru.babylonjs.component {
                 } else this.meshPicked.rotate(new Vector3(0, 0, cN.z), angle, Space.WORLD);
                 this.setLocalAxes(this.meshPicked);
             }
+            this.meshPicked.rotation = this.meshPicked.rotationQuaternion.toEulerAngles();
         }
 
         private getPosOnPickPlane() : Vector3 {
@@ -329,6 +344,12 @@ module org.ssatguru.babylonjs.component {
             } else {
                 return null;
             }
+        }
+
+        private hideBaxis()  {
+            this.bXaxis.visibility = 0;
+            this.bYaxis.visibility = 0;
+            this.bZaxis.visibility = 0;
         }
 
         private setAxisVisiblity(v: number)  {
@@ -430,6 +451,12 @@ module org.ssatguru.babylonjs.component {
             }
         }
 
+        private bXaxis: LinesMesh;
+
+        private bYaxis: LinesMesh;
+
+        private bZaxis: LinesMesh;
+
         private xaxis: LinesMesh;
 
         private yaxis: LinesMesh;
@@ -441,6 +468,19 @@ module org.ssatguru.babylonjs.component {
         private createGuideAxes()  {
             var l: number = this.axesLen * this.axesScale;
             this.guideCtl = new Mesh("guideCtl", this.scene);
+            this.bXaxis = Mesh.CreateLines("xAxis", [new Vector3(-100, 0, 0), new Vector3(100, 0, 0)], this.scene);
+            this.bYaxis = Mesh.CreateLines("yAxis", [new Vector3(0, -100, 0), new Vector3(0, 100, 0)], this.scene);
+            this.bZaxis = Mesh.CreateLines("zAxis", [new Vector3(0, 0, -100), new Vector3(0, 0, 100)], this.scene);
+            this.bXaxis.parent = this.guideCtl;
+            this.bYaxis.parent = this.guideCtl;
+            this.bZaxis.parent = this.guideCtl;
+            this.bXaxis.color = Color3.Red();
+            this.bYaxis.color = Color3.Green();
+            this.bZaxis.color = Color3.Blue();
+            this.bXaxis.renderingGroupId = 1;
+            this.bYaxis.renderingGroupId = 1;
+            this.bZaxis.renderingGroupId = 1;
+            this.hideBaxis();
             this.xaxis = Mesh.CreateLines("xAxis", [new Vector3(0, 0, 0), new Vector3(l, 0, 0)], this.scene);
             this.yaxis = Mesh.CreateLines("yAxis", [new Vector3(0, 0, 0), new Vector3(0, l, 0)], this.scene);
             this.zaxis = Mesh.CreateLines("zAxis", [new Vector3(0, 0, 0), new Vector3(0, 0, l)], this.scene);
@@ -458,7 +498,7 @@ module org.ssatguru.babylonjs.component {
         private pickPlane: Mesh;
 
         private createPickPlane()  {
-            this.pickPlane = Mesh.CreatePlane("axisPlane", 20, this.scene);
+            this.pickPlane = Mesh.CreatePlane("axisPlane", 200, this.scene);
             this.pickPlane.isPickable = false;
             this.pickPlane.visibility = 0;
             this.pickPlane.billboardMode = Mesh.BILLBOARDMODE_ALL;
@@ -484,9 +524,12 @@ module org.ssatguru.babylonjs.component {
             var l: number = this.axesLen * this.axesScale;
             this.tCtl = new Mesh("tarnsCtl", this.scene);
             this.tX = this.extrudeBox(r / 2, l);
-            this.tX.name = "transX";
-            this.tY = this.tX.clone("transY");
-            this.tZ = this.tX.clone("transZ");
+            this.tX.name = "X";
+            this.tY = this.tX.clone("Y");
+            this.tZ = this.tX.clone("Z");
+            this.tX.material = this.redMat;
+            this.tY.material = this.greenMat;
+            this.tZ.material = this.blueMat;
             this.tX.parent = this.tCtl;
             this.tY.parent = this.tCtl;
             this.tZ.parent = this.tCtl;
@@ -498,6 +541,9 @@ module org.ssatguru.babylonjs.component {
             this.tX.renderingGroupId = 1;
             this.tY.renderingGroupId = 1;
             this.tZ.renderingGroupId = 1;
+            this.tX.isPickable = false;
+            this.tY.isPickable = false;
+            this.tZ.isPickable = false;
             var cl: number = l * this.axesScale / 4;
             var cr: number = r * this.axesScale;
             this.tEndX = Mesh.CreateCylinder("tEndX", cl, 0, cr, 6, 1, this.scene);
@@ -518,6 +564,9 @@ module org.ssatguru.babylonjs.component {
             this.tEndX.renderingGroupId = 1;
             this.tEndY.renderingGroupId = 1;
             this.tEndZ.renderingGroupId = 1;
+            this.tEndX.isPickable = false;
+            this.tEndY.isPickable = false;
+            this.tEndZ.isPickable = false;
         }
 
         rCtl: Mesh;
@@ -538,9 +587,12 @@ module org.ssatguru.babylonjs.component {
             var r: number = 0.04;
             var d: number = this.axesLen * this.axesScale * 2;
             this.rCtl = new Mesh("rotCtl", this.scene);
-            this.rX = Mesh.CreateTorus("", d, r, 20, this.scene);
-            this.rY = this.rX.clone("");
-            this.rZ = this.rX.clone("");
+            this.rX = Mesh.CreateTorus("X", d, r, 30, this.scene);
+            this.rY = this.rX.clone("Y");
+            this.rZ = this.rX.clone("Z");
+            this.rX.material = this.redMat;
+            this.rY.material = this.greenMat;
+            this.rZ.material = this.blueMat;
             this.rX.parent = this.rCtl;
             this.rY.parent = this.rCtl;
             this.rZ.parent = this.rCtl;
@@ -552,6 +604,9 @@ module org.ssatguru.babylonjs.component {
             this.rX.renderingGroupId = 1;
             this.rY.renderingGroupId = 1;
             this.rZ.renderingGroupId = 1;
+            this.rX.isPickable = false;
+            this.rY.isPickable = false;
+            this.rZ.isPickable = false;
             var cl: number = d;
             var cr: number = r / 8;
             this.rEndX = this.createCircle(cl / 2);
@@ -569,12 +624,15 @@ module org.ssatguru.babylonjs.component {
             this.rEndX.renderingGroupId = 1;
             this.rEndY.renderingGroupId = 1;
             this.rEndZ.renderingGroupId = 1;
+            this.rEndX.isPickable = false;
+            this.rEndY.isPickable = false;
+            this.rEndZ.isPickable = false;
         }
 
         private extrudeBox(w: number, l: number) : Mesh {
             var shape: Vector3[] = [new Vector3(w, w, 0), new Vector3(-w, w, 0), new Vector3(-w, -w, 0), new Vector3(w, -w, 0), new Vector3(w, w, 0)];
             var path: Vector3[] = [new Vector3(0, 0, 0), new Vector3(0, 0, l)];
-            var box: Mesh = Mesh.ExtrudeShape("", shape, path, 1, 0, 0, this.scene);
+            var box: Mesh = Mesh.ExtrudeShape("", shape, path, 1, 0, 2, this.scene);
             return box;
         }
 
@@ -616,11 +674,15 @@ module org.ssatguru.babylonjs.component {
             var r: number = 0.04;
             var l: number = this.axesLen * this.axesScale;
             this.sCtl = new Mesh("sCtl", this.scene);
-            this.sAll = Mesh.CreateBox("", r * 2, this.scene);
+            this.sAll = Mesh.CreateBox("ALL", r * 2, this.scene);
             this.sX = this.extrudeBox(r / 2, l);
-            this.sX.name = "scaleX";
-            this.sY = this.sX.clone("scaleY");
-            this.sZ = this.sX.clone("scaleZ");
+            this.sX.name = "X";
+            this.sY = this.sX.clone("Y");
+            this.sZ = this.sX.clone("Z");
+            this.sX.material = this.redMat;
+            this.sY.material = this.greenMat;
+            this.sZ.material = this.blueMat;
+            this.sAll.material = this.whiteMat;
             this.sX.parent = this.sCtl;
             this.sY.parent = this.sCtl;
             this.sZ.parent = this.sCtl;
@@ -635,6 +697,10 @@ module org.ssatguru.babylonjs.component {
             this.sY.renderingGroupId = 1;
             this.sZ.renderingGroupId = 1;
             this.sAll.renderingGroupId = 1;
+            this.sX.isPickable = false;
+            this.sY.isPickable = false;
+            this.sZ.isPickable = false;
+            this.sAll.isPickable = false;
             var cr: number = r * this.axesScale;
             this.sEndX = Mesh.CreateBox("", cr, this.scene);
             this.sEndY = this.sEndX.clone("");
@@ -655,6 +721,10 @@ module org.ssatguru.babylonjs.component {
             this.sEndY.renderingGroupId = 1;
             this.sEndZ.renderingGroupId = 1;
             this.sEndAll.renderingGroupId = 1;
+            this.sEndX.isPickable = false;
+            this.sEndY.isPickable = false;
+            this.sEndZ.isPickable = false;
+            this.sEndAll.isPickable = false;
         }
 
         localX: Vector3;
@@ -666,7 +736,7 @@ module org.ssatguru.babylonjs.component {
         localRot: Vector3;
 
         private setLocalAxes(mesh: Mesh)  {
-            var meshMatrix: Matrix = mesh.computeWorldMatrix(true);
+            var meshMatrix: Matrix = mesh.getWorldMatrix();
             var pos: Vector3 = mesh.position;
             this.localX = Vector3.TransformCoordinates(Axis.X, meshMatrix).subtract(pos);
             this.localY = Vector3.TransformCoordinates(Axis.Y, meshMatrix).subtract(pos);
@@ -723,6 +793,7 @@ module org.ssatguru.babylonjs.component {
             this.greenMat = EditControl.getStandardMaterial("greenMat", Color3.Green(), scene);
             this.blueMat = EditControl.getStandardMaterial("blueMat", Color3.Blue(), scene);
             this.whiteMat = EditControl.getStandardMaterial("whiteMat", Color3.White(), scene);
+            this.yellowMat = EditControl.getStandardMaterial("whiteMat", Color3.Yellow(), scene);
         }
 
         private disposeMaterials()  {
@@ -730,6 +801,7 @@ module org.ssatguru.babylonjs.component {
             this.greenMat.dispose();
             this.blueMat.dispose();
             this.whiteMat.dispose();
+            this.yellowMat.dispose();
         }
 
         private static getStandardMaterial(name: string, col: Color3, scene: Scene) : StandardMaterial {

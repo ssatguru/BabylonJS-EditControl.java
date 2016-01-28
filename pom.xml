@@ -57,18 +57,6 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
@@ -86,6 +74,8 @@
 					<sourceMap>false</sourceMap>
 					<outDir>target/js</outDir>
 					<targetVersion>ES3</targetVersion>
+					<declaration>true</declaration>
+					<dtsOut>${basedir}/src/main/resources/src/typings</dtsOut>
 				</configuration>
 				<executions>
 					<execution>
@@ -97,39 +87,57 @@
 					</execution>
 				</executions>
 			</plugin>
+			
 			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>2.7</version>
 				<executions>
 					<execution>
-						<id>copy-resources</id>
-						<!-- here the phase you need -->
+						<id>copy-js-ts</id>
 						<phase>generate-sources</phase>
 						<goals>
 							<goal>copy-resources</goal>
 						</goals>
+						<!--  copy .js and .ts file to the webapp folder -->
 						<configuration>
 							<outputDirectory>${basedir}/webapp/js</outputDirectory>
 							<resources>
+								<!-- copy javascript files -->
 								<resource>
 									<directory>${basedir}/target/js</directory>
 									<includes>
 										<include>**/*.js</include>
 									</includes>
+									<excludes>
+          								<exclude>**/.*</exclude>
+          							</excludes>
 								</resource>
+								<!-- copy typescript files -->
 								<resource>
 									<directory>${basedir}/.ts</directory>
 									<includes>
 										<include>**/*.ts</include>
 									</includes>
+									<excludes>
+          								<exclude>**/.*</exclude>
+          							</excludes>
+								</resource>
+								<!-- copy typescript definition files -->
+								<resource>
+									<directory>${basedir}/src/main/resources/src/typings</directory>
+									<includes>
+										<include>**/*.d.ts</include>
+									</includes>
+									<excludes>
+          								<exclude>**/.*</exclude>
+          							</excludes>
 								</resource>
 							</resources>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
-
-
+			
 		</plugins>
 
 		<pluginManagement>
