@@ -136,6 +136,10 @@ module org.ssatguru.babylonjs.component {
             }
         }
 
+        public isEditing() : boolean {
+            return this.editing;
+        }
+
         private detachControl(cam: Object, can: Object)  {
             var camera: Camera = <Camera>cam;
             var canvas: HTMLCanvasElement = <HTMLCanvasElement>can;

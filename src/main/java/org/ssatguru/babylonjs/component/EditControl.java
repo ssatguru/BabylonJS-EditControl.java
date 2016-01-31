@@ -132,6 +132,10 @@ public class EditControl {
 
 	}
 
+	public boolean isEditing(){
+		return this.editing;
+	}
+	
 	private void detachControl(Object cam, Object can) {
 		Camera camera = (Camera) cam;
 		HTMLCanvasElement canvas = (HTMLCanvasElement) can;

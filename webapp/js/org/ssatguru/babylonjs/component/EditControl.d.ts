@@ -28,6 +28,7 @@ declare module org.ssatguru.babylonjs.component {
         pDown: boolean;
         axisPicked: Mesh;
         private onPointerDown(evt);
+        isEditing(): boolean;
         private detachControl(cam, can);
         private prevOverMesh;
         private onPointerOver();

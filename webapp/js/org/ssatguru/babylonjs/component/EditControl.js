@@ -115,6 +115,9 @@ var org;
                             window.setTimeout((function (cam, can) { return _this.detachControl(cam, can); }), 0, this.mainCamera, this.canvas);
                         }
                     };
+                    EditControl.prototype.isEditing = function () {
+                        return this.editing;
+                    };
                     EditControl.prototype.detachControl = function (cam, can) {
                         var camera = cam;
                         var canvas = can;
