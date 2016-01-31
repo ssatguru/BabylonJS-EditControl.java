@@ -73,6 +73,7 @@ public class EditControl {
 	}
 
 	public void switchTo(Mesh mesh) {
+		mesh.computeWorldMatrix(true);
 		this.meshPicked = mesh;
 		this.setLocalAxes(mesh);
 	}

@@ -61,6 +61,7 @@ var org;
                         this.onPointerOver();
                     };
                     EditControl.prototype.switchTo = function (mesh) {
+                        mesh.computeWorldMatrix(true);
                         this.meshPicked = mesh;
                         this.setLocalAxes(mesh);
                     };

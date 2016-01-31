@@ -89,6 +89,7 @@ module org.ssatguru.babylonjs.component {
         }
 
         public switchTo(mesh: Mesh)  {
+            mesh.computeWorldMatrix(true);
             this.meshPicked = mesh;
             this.setLocalAxes(mesh);
         }
