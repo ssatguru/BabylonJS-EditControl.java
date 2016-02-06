@@ -109,9 +109,9 @@ public class EditControl {
 		this.actHist = null;
 	}
 
-	boolean pDown = false;
+	private boolean pDown = false;
 
-	Mesh axisPicked;
+	private Mesh axisPicked;
 
 	private void onPointerDown(Event evt) {
 		evt.preventDefault();
@@ -274,10 +274,10 @@ public class EditControl {
 		}
 	}
 
-	Vector3 prevPos;
+	private Vector3 prevPos;
 
-	double snapX = 0, snapY = 0, snapZ = 0;
-	double snapRX = 0, snapRY = 0, snapRZ = 0;
+	private double snapX = 0, snapY = 0, snapZ = 0;
+	private double snapRX = 0, snapRY = 0, snapRZ = 0;
 
 	private void onPointerMove(Event evt) {
 
@@ -746,8 +746,8 @@ public class EditControl {
 
 	}
 
-	Mesh rCtl, rX, rY, rZ;
-	LinesMesh rEndX, rEndY, rEndZ;
+	private Mesh rCtl, rX, rY, rZ;
+	private LinesMesh rEndX, rEndY, rEndZ;
 
 	private void createRotAxes() {
 		double r = 0.04;
@@ -916,7 +916,7 @@ public class EditControl {
 
 	}
 
-	Vector3 localX, localY, localZ, localRot;
+	private Vector3 localX, localY, localZ, localRot;
 
 	private void setLocalAxes(Mesh mesh) {
 		Matrix meshMatrix = mesh.getWorldMatrix();
@@ -1055,7 +1055,6 @@ class ActHist{
 			last++;
 			current++;
 		}
-		//debug();
 	}
 	
 	public void undo(){
@@ -1063,7 +1062,6 @@ class ActHist{
 			current--;
 			((Act) acts.$get(current)).perform(this.mesh);
 		}
-		//debug();
 	}
 	
 	public void redo(){
@@ -1071,20 +1069,15 @@ class ActHist{
 			current++;
 			((Act) acts.$get(current)).perform(this.mesh);
 		}
-		//debug();
 	}
 	
-	private void debug(){
-		console.log("act len " +this.acts.length);
-		console.log("current " +current);
-		console.log("last " +last);
-	}
+
 }
 class Act{
 	
-	Vector3 p;
-	Quaternion r;
-	Vector3 s;
+	private Vector3 p;
+	private Quaternion r;
+	private Vector3 s;
 	
 	public Act(AbstractMesh mesh){
 		this.p = mesh.position.Clone();

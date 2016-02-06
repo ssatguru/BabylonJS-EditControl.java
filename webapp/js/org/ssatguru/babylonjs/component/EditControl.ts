@@ -125,9 +125,9 @@ module org.ssatguru.babylonjs.component {
             this.actHist = null;
         }
 
-        pDown: boolean = false;
+        private pDown: boolean = false;
 
-        axisPicked: Mesh;
+        private axisPicked: Mesh;
 
         private onPointerDown(evt: Event)  {
             evt.preventDefault();
@@ -253,19 +253,19 @@ module org.ssatguru.babylonjs.component {
             }
         }
 
-        prevPos: Vector3;
+        private prevPos: Vector3;
 
-        snapX: number = 0;
+        private snapX: number = 0;
 
-        snapY: number = 0;
+        private snapY: number = 0;
 
-        snapZ: number = 0;
+        private snapZ: number = 0;
 
-        snapRX: number = 0;
+        private snapRX: number = 0;
 
-        snapRY: number = 0;
+        private snapRY: number = 0;
 
-        snapRZ: number = 0;
+        private snapRZ: number = 0;
 
         private onPointerMove(evt: Event)  {
             if((!this.pDown || !this.editing)) return;
@@ -647,19 +647,19 @@ module org.ssatguru.babylonjs.component {
             this.tEndZ.isPickable = false;
         }
 
-        rCtl: Mesh;
+        private rCtl: Mesh;
 
-        rX: Mesh;
+        private rX: Mesh;
 
-        rY: Mesh;
+        private rY: Mesh;
 
-        rZ: Mesh;
+        private rZ: Mesh;
 
-        rEndX: LinesMesh;
+        private rEndX: LinesMesh;
 
-        rEndY: LinesMesh;
+        private rEndY: LinesMesh;
 
-        rEndZ: LinesMesh;
+        private rEndZ: LinesMesh;
 
         private createRotAxes()  {
             var r: number = 0.04;
@@ -805,13 +805,13 @@ module org.ssatguru.babylonjs.component {
             this.sEndAll.isPickable = false;
         }
 
-        localX: Vector3;
+        private localX: Vector3;
 
-        localY: Vector3;
+        private localY: Vector3;
 
-        localZ: Vector3;
+        private localZ: Vector3;
 
-        localRot: Vector3;
+        private localRot: Vector3;
 
         private setLocalAxes(mesh: Mesh)  {
             var meshMatrix: Matrix = mesh.getWorldMatrix();
@@ -959,20 +959,14 @@ module org.ssatguru.babylonjs.component {
                 (<Act>this.acts[this.current]).perform(this.mesh);
             }
         }
-
-        private debug()  {
-            console.log("act len " + this.acts.length);
-            console.log("current " + this.current);
-            console.log("last " + this.last);
-        }
     }
 
     export class Act {
-        p: Vector3;
+        private p: Vector3;
 
-        r: Quaternion;
+        private r: Quaternion;
 
-        s: Vector3;
+        private s: Vector3;
 
         public constructor(mesh: AbstractMesh)  {
             this.p = mesh.position.clone();

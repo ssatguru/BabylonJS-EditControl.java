@@ -878,11 +878,6 @@ var org;
                             this.acts[this.current].perform(this.mesh);
                         }
                     };
-                    ActHist.prototype.debug = function () {
-                        console.log("act len " + this.acts.length);
-                        console.log("current " + this.current);
-                        console.log("last " + this.last);
-                    };
                     return ActHist;
                 })();
                 component.ActHist = ActHist;
