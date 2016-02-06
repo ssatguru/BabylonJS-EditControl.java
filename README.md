@@ -117,6 +117,8 @@ editControl.setTransSnapValue(number n in meters);
 editControl.setRotSnapValue(number n in radians);
 ```
 9) To undo or redo
+
+By default does upto 10 undos
 ```
 editControl.undo();
 ```
