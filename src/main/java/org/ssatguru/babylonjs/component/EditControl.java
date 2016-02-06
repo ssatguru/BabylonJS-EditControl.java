@@ -90,12 +90,14 @@ public class EditControl {
 	
 	public void undo(){
 		this.actHist.undo();
+		this.meshPicked.computeWorldMatrix(true);
 		this.setLocalAxes(this.meshPicked);
 		
 	}
 
 	public void redo(){
 		this.actHist.redo();
+		this.meshPicked.computeWorldMatrix(true);
 		this.setLocalAxes(this.meshPicked);
 	}
 	
@@ -920,7 +922,7 @@ public class EditControl {
 
 	private void setLocalAxes(Mesh mesh) {
 		Matrix meshMatrix = mesh.getWorldMatrix();
-		// Matrix meshMatrix = mesh.computeWorldMatrix(true);
+		//Matrix meshMatrix = mesh.computeWorldMatrix(true);
 		Vector3 pos = mesh.position;
 		localX = Vector3.TransformCoordinates(Axis.X, meshMatrix).subtract(pos);
 		localY = Vector3.TransformCoordinates(Axis.Y, meshMatrix).subtract(pos);

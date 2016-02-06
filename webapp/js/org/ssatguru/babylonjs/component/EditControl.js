@@ -72,10 +72,12 @@ var org;
                     };
                     EditControl.prototype.undo = function () {
                         this.actHist.undo();
+                        this.meshPicked.computeWorldMatrix(true);
                         this.setLocalAxes(this.meshPicked);
                     };
                     EditControl.prototype.redo = function () {
                         this.actHist.redo();
+                        this.meshPicked.computeWorldMatrix(true);
                         this.setLocalAxes(this.meshPicked);
                     };
                     EditControl.prototype.detach = function () {

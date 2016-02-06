@@ -107,11 +107,13 @@ module org.ssatguru.babylonjs.component {
 
         public undo()  {
             this.actHist.undo();
+            this.meshPicked.computeWorldMatrix(true);
             this.setLocalAxes(this.meshPicked);
         }
 
         public redo()  {
             this.actHist.redo();
+            this.meshPicked.computeWorldMatrix(true);
             this.setLocalAxes(this.meshPicked);
         }
 
