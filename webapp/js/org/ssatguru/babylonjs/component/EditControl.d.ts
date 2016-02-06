@@ -1,7 +1,9 @@
 declare module org.ssatguru.babylonjs.component {
+    import AbstractMesh = BABYLON.AbstractMesh;
     import Camera = BABYLON.Camera;
     import LinesMesh = BABYLON.LinesMesh;
     import Mesh = BABYLON.Mesh;
+    import Quaternion = BABYLON.Quaternion;
     import Vector3 = BABYLON.Vector3;
     class EditControl {
         private meshPicked;
@@ -21,9 +23,12 @@ declare module org.ssatguru.babylonjs.component {
         private blueMat;
         private whiteMat;
         private yellowMat;
+        private actHist;
         constructor(mesh: Mesh, camera: Camera, canvas: HTMLCanvasElement, scale: number);
         private renderLoopProcess();
         switchTo(mesh: Mesh): void;
+        undo(): void;
+        redo(): void;
         detach(): void;
         pDown: boolean;
         axisPicked: Mesh;
@@ -32,6 +37,7 @@ declare module org.ssatguru.babylonjs.component {
         private detachControl(cam, can);
         private prevOverMesh;
         private onPointerOver();
+        private restoreColor(mesh);
         editing: boolean;
         private onPointerUp(evt);
         prevPos: Vector3;
@@ -110,5 +116,23 @@ declare module org.ssatguru.babylonjs.component {
         private createMaterials(scene);
         private disposeMaterials();
         private static getStandardMaterial(name, col, scene);
+    }
+    class ActHist {
+        private mesh;
+        private capacity;
+        private acts;
+        private last;
+        private current;
+        constructor(mesh: AbstractMesh, capacity: number);
+        add(): void;
+        undo(): void;
+        redo(): void;
+    }
+    class Act {
+        p: Vector3;
+        r: Quaternion;
+        s: Vector3;
+        constructor(mesh: AbstractMesh);
+        perform(mesh: AbstractMesh): void;
     }
 }

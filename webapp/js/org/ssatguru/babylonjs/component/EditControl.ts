@@ -1,5 +1,7 @@
-"Generated from Java with JSweet 1.0.0-RC1 - http://www.jsweet.org";
+"Generated from Java with JSweet 1.0.0 - http://www.jsweet.org";
 module org.ssatguru.babylonjs.component {
+    import AbstractMesh = BABYLON.AbstractMesh;
+
     import Axis = BABYLON.Axis;
 
     import Camera = BABYLON.Camera;
@@ -15,6 +17,8 @@ module org.ssatguru.babylonjs.component {
     import Mesh = BABYLON.Mesh;
 
     import PickingInfo = BABYLON.PickingInfo;
+
+    import Quaternion = BABYLON.Quaternion;
 
     import Scene = BABYLON.Scene;
 
@@ -59,12 +63,15 @@ module org.ssatguru.babylonjs.component {
 
         private yellowMat: StandardMaterial;
 
+        private actHist: ActHist;
+
         public constructor(mesh: Mesh, camera: Camera, canvas: HTMLCanvasElement, scale: number)  {
             this.meshPicked = mesh;
             this.canvas = canvas;
             this.axesScale = scale;
             this.scene = mesh.getScene();
             this.mainCamera = camera;
+            this.actHist = new ActHist(mesh, 10);
             mesh.computeWorldMatrix(true);
             this.theParent = new Mesh("EditControl", this.scene);
             this.theParent.position = this.meshPicked.position;
@@ -94,6 +101,20 @@ module org.ssatguru.babylonjs.component {
             this.setLocalAxes(mesh);
         }
 
+        public setUndoCount(c: number)  {
+            this.actHist.setCapacity(c);
+        }
+
+        public undo()  {
+            this.actHist.undo();
+            this.setLocalAxes(this.meshPicked);
+        }
+
+        public redo()  {
+            this.actHist.redo();
+            this.setLocalAxes(this.meshPicked);
+        }
+
         public detach()  {
             this.theParent.dispose();
             this.disposeMaterials();
@@ -101,6 +122,7 @@ module org.ssatguru.babylonjs.component {
             this.canvas.removeEventListener("pointerup", (evt) => { return this.onPointerUp(evt) }, false);
             this.canvas.removeEventListener("pointermove", (evt) => { return this.onPointerMove(evt) }, false);
             this.scene.unregisterBeforeRender(() => { return this.renderLoopProcess() });
+            this.actHist = null;
         }
 
         pDown: boolean = false;
@@ -165,16 +187,54 @@ module org.ssatguru.babylonjs.component {
                 if((<Mesh>pickResult.pickedMesh != this.prevOverMesh)) {
                     if((this.prevOverMesh != null)) {
                         this.prevOverMesh.visibility = 0;
+                        this.restoreColor(this.prevOverMesh);
                     }
                     this.prevOverMesh = <Mesh>pickResult.pickedMesh;
-                    this.prevOverMesh.visibility = 0.1;
+                    if((this.rotEnabled)) {
+                        (<LinesMesh>this.prevOverMesh.getChildren()[0]).color = Color3.White();
+                    } else {
+                        (<Mesh>this.prevOverMesh.getChildren()[0]).material = this.whiteMat;
+                    }
+                    if((this.prevOverMesh.name == "X")) {
+                        this.xaxis.color = Color3.White();
+                    } else if((this.prevOverMesh.name == "Y")) {
+                        this.yaxis.color = Color3.White();
+                    } else if((this.prevOverMesh.name == "Z")) {
+                        this.zaxis.color = Color3.White();
+                    } else {
+                    }
                 }
             } else {
                 if((this.prevOverMesh != null)) {
-                    this.prevOverMesh.visibility = 0;
-                    this.prevOverMesh.renderOutline = false;
+                    this.restoreColor(this.prevOverMesh);
                     this.prevOverMesh = null;
                 }
+            }
+        }
+
+        private restoreColor(mesh: Mesh)  {
+            var col: Color3;
+            var mat: Material;
+            if((mesh.name == "X")) {
+                col = Color3.Red();
+                mat = this.redMat;
+                this.xaxis.color = Color3.Red();
+            } else if((this.prevOverMesh.name == "Y")) {
+                col = Color3.Green();
+                mat = this.greenMat;
+                this.yaxis.color = Color3.Green();
+            } else if((this.prevOverMesh.name == "Z")) {
+                col = Color3.Blue();
+                mat = this.blueMat;
+                this.zaxis.color = Color3.Blue();
+            } else {
+                col = Color3.Yellow();
+                mat = this.yellowMat;
+            }
+            if((this.rotEnabled)) {
+                (<LinesMesh>this.prevOverMesh.getChildren()[0]).color = col;
+            } else {
+                (<Mesh>this.prevOverMesh.getChildren()[0]).material = mat;
             }
         }
 
@@ -187,8 +247,9 @@ module org.ssatguru.babylonjs.component {
                 this.editing = false;
                 this.setAxisVisiblity(1);
                 this.hideBaxis();
-                this.prevOverMesh.visibility = 0;
+                this.restoreColor(this.prevOverMesh);
                 this.prevOverMesh = null;
+                this.actHist.add();
             }
         }
 
@@ -378,6 +439,10 @@ module org.ssatguru.babylonjs.component {
 
         private transEnabled: boolean = false;
 
+        public isTranslationEnabled() : boolean {
+            return this.transEnabled;
+        }
+
         public enableTranslation()  {
             if((this.tX == null)) {
                 this.createTransAxes();
@@ -404,6 +469,10 @@ module org.ssatguru.babylonjs.component {
 
         private rotEnabled: boolean = false;
 
+        public isRotationEnabled() : boolean {
+            return this.rotEnabled;
+        }
+
         public enableRotation()  {
             if((this.rX == null)) {
                 this.createRotAxes();
@@ -429,6 +498,10 @@ module org.ssatguru.babylonjs.component {
         }
 
         private scaleEnabled: boolean = false;
+
+        public isScaleEnabled() : boolean {
+            return this.scaleEnabled;
+        }
 
         public enableScaling()  {
             if((this.sX == null)) {
@@ -495,9 +568,9 @@ module org.ssatguru.babylonjs.component {
             this.xaxis.color = Color3.Red();
             this.yaxis.color = Color3.Green();
             this.zaxis.color = Color3.Blue();
-            this.xaxis.renderingGroupId = 1;
-            this.yaxis.renderingGroupId = 1;
-            this.zaxis.renderingGroupId = 1;
+            this.xaxis.renderingGroupId = 2;
+            this.yaxis.renderingGroupId = 2;
+            this.zaxis.renderingGroupId = 2;
         }
 
         private pickPlane: Mesh;
@@ -687,7 +760,7 @@ module org.ssatguru.babylonjs.component {
             this.sX.material = this.redMat;
             this.sY.material = this.greenMat;
             this.sZ.material = this.blueMat;
-            this.sAll.material = this.whiteMat;
+            this.sAll.material = this.yellowMat;
             this.sX.parent = this.sCtl;
             this.sY.parent = this.sCtl;
             this.sZ.parent = this.sCtl;
@@ -721,7 +794,7 @@ module org.ssatguru.babylonjs.component {
             this.sEndX.material = this.redMat;
             this.sEndY.material = this.greenMat;
             this.sEndZ.material = this.blueMat;
-            this.sEndAll.material = this.whiteMat;
+            this.sEndAll.material = this.yellowMat;
             this.sEndX.renderingGroupId = 1;
             this.sEndY.renderingGroupId = 1;
             this.sEndZ.renderingGroupId = 1;
@@ -754,6 +827,10 @@ module org.ssatguru.babylonjs.component {
             if((this.local == l)) return;
             this.local = l;
             if((this.local)) this.theParent.rotation.copyFrom(this.localRot); else this.theParent.rotation.copyFrom(Vector3.Zero());
+        }
+
+        public isLocal() : boolean {
+            return this.local;
         }
 
         public setTransSnap(s: boolean)  {
@@ -815,6 +892,98 @@ module org.ssatguru.babylonjs.component {
             mat.diffuseColor = Color3.Black();
             mat.specularColor = Color3.Black();
             return mat;
+        }
+    }
+
+    export class ActHist {
+        private mesh: AbstractMesh;
+
+        private lastMax: number = 10;
+
+        private acts: Array<Act> = new Array();
+
+        private last: number = -1;
+
+        private current: number = -1;
+
+        public constructor(mesh: AbstractMesh, capacity: number)  {
+            this.mesh = mesh;
+            this.lastMax = capacity - 1;
+            if((mesh.rotationQuaternion == null)) {
+                if((mesh.rotation != null)) {
+                    mesh.rotationQuaternion = Quaternion.RotationYawPitchRoll(mesh.rotation.y, mesh.rotation.x, mesh.rotation.z);
+                }
+            }
+            this.add();
+        }
+
+        public setCapacity(c: number)  {
+            if((c == 0)) {
+                console.error("capacity should be more than zero");
+                return;
+            }
+            this.lastMax = c - 1;
+            this.last = -1;
+            this.current = -1;
+            this.acts = new Array();
+            this.add();
+        }
+
+        public add()  {
+            var act: Act = new Act(this.mesh);
+            if((this.current < this.last)) {
+                for(var i: number = this.last; this.current < this.last; this.last--) {
+                    this.acts.pop();
+                }
+            }
+            if((this.last == this.lastMax)) {
+                this.acts.shift();
+                this.acts.push(act);
+            } else {
+                this.acts.push(act);
+                this.last++;
+                this.current++;
+            }
+        }
+
+        public undo()  {
+            if((this.current > 0)) {
+                this.current--;
+                (<Act>this.acts[this.current]).perform(this.mesh);
+            }
+        }
+
+        public redo()  {
+            if((this.current < this.last)) {
+                this.current++;
+                (<Act>this.acts[this.current]).perform(this.mesh);
+            }
+        }
+
+        private debug()  {
+            console.log("act len " + this.acts.length);
+            console.log("current " + this.current);
+            console.log("last " + this.last);
+        }
+    }
+
+    export class Act {
+        p: Vector3;
+
+        r: Quaternion;
+
+        s: Vector3;
+
+        public constructor(mesh: AbstractMesh)  {
+            this.p = mesh.position.clone();
+            this.r = mesh.rotationQuaternion.clone();
+            this.s = mesh.scaling.clone();
+        }
+
+        public perform(mesh: AbstractMesh)  {
+            mesh.position = this.p.clone();
+            mesh.rotationQuaternion = this.r.clone();
+            mesh.scaling = this.s.clone();
         }
     }
 }

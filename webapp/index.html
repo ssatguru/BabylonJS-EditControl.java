@@ -59,13 +59,18 @@ html, body {
 		<button id="scale">scale</button>
 		<input type="checkbox" id="snaptrans">snap translation 
 		<input type="checkbox" id="snaprot">snap rotation
+		<button id="undo">undo</button>
+		<button id="redo">redo</button>
 		<button id="help" style="float: right;">Help</button>
+		<br>
+		<button id="focus">focus</button>
 	</div>
 
 	<canvas id="renderCanvas"></canvas>
 
 	<script type="text/javascript">
 		var box;
+		var camera;
 		var editControl;
 
 		var helpButton = document.getElementById("help");
@@ -77,6 +82,9 @@ html, body {
 		var snapRButton = document.getElementById("snaprot");
 		snapTButton.checked = false;
 		snapRButton.checked = false;
+		var undoButton = document.getElementById("undo");
+		var redoButton = document.getElementById("redo");
+		var focusButton = document.getElementById("focus");
 
 		var showHelp = function() {
 			var el = document.getElementById("overlay");
@@ -94,17 +102,31 @@ html, body {
 		};
 		scaleButton.onclick = function() {
 			editControl.enableScaling()
+			if (!editControl.isLocal()){
+				alert("Please note that you cannot scale in global mode");
+			}
 		};
 		localButton.onclick = function() {
-			editControl.setLocal(localButton.checked)
+			editControl.setLocal(localButton.checked);
+			if (editControl.isScaleEnabled() && !editControl.isLocal()){
+				alert("Please note that you cannot scale in global mode");
+			}
 		};
 		snapTButton.onclick = function() {
-			editControl.setTransSnap(snapTButton.checked)
+			editControl.setTransSnap(snapTButton.checked);
 		};
 		snapRButton.onclick = function() {
-			editControl.setRotSnap(snapRButton.checked)
+			editControl.setRotSnap(snapRButton.checked);
 		};
-
+		undoButton.onclick = function() {
+			editControl.undo();
+		};
+		redoButton.onclick = function() {
+			editControl.redo();
+		};
+		focusButton.onclick = function() {
+			camera.target.copyFrom(box.position);
+		};
 		var canvas = document.querySelector("#renderCanvas");
 
 		var engine = new BABYLON.Engine(canvas, true);
@@ -115,7 +137,7 @@ html, body {
 
 			scene.clearColor = new BABYLON.Color3(0.75, 0.75, 0.75);
 
-			var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", 1, 1.2,
+			camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", 1, 1.2,
 					20, new BABYLON.Vector3(0, 0, 0), scene);
 			camera.wheelPrecision = 15;
 			camera.setTarget(BABYLON.Vector3.Zero());

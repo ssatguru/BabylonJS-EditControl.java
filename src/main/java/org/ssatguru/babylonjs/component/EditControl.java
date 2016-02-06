@@ -4,6 +4,7 @@ import static jsweet.dom.Globals.console;
 import static jsweet.dom.Globals.window;
 import static jsweet.util.Globals.function;
 
+import def.babylonjs.babylon.AbstractMesh;
 import def.babylonjs.babylon.Axis;
 import def.babylonjs.babylon.Camera;
 import def.babylonjs.babylon.Color3;
@@ -12,6 +13,7 @@ import def.babylonjs.babylon.Material;
 import def.babylonjs.babylon.Matrix;
 import def.babylonjs.babylon.Mesh;
 import def.babylonjs.babylon.PickingInfo;
+import def.babylonjs.babylon.Quaternion;
 import def.babylonjs.babylon.Scene;
 import def.babylonjs.babylon.Space;
 import def.babylonjs.babylon.StandardMaterial;
@@ -19,6 +21,7 @@ import def.babylonjs.babylon.Vector3;
 import jsweet.dom.Event;
 import jsweet.dom.HTMLCanvasElement;
 import jsweet.dom.PointerEvent;
+import jsweet.lang.Array;
 import jsweet.lang.Math;
 
 public class EditControl {
@@ -36,6 +39,7 @@ public class EditControl {
 	private double axesLen = 0.4;
 	private double axesScale = 1;
 	private StandardMaterial redMat, greenMat, blueMat, whiteMat, yellowMat;
+	private ActHist actHist;
 
 	public EditControl(Mesh mesh, Camera camera, HTMLCanvasElement canvas, double scale) {
 		this.meshPicked = mesh;
@@ -44,6 +48,8 @@ public class EditControl {
 
 		this.scene = mesh.getScene();
 		this.mainCamera = camera;
+		this.actHist = new ActHist(mesh, 10);
+		
 
 		mesh.computeWorldMatrix(true);
 
@@ -77,7 +83,22 @@ public class EditControl {
 		this.meshPicked = mesh;
 		this.setLocalAxes(mesh);
 	}
+	
+	public void setUndoCount(int c){
+		this.actHist.setCapacity(c);
+	}
+	
+	public void undo(){
+		this.actHist.undo();
+		this.setLocalAxes(this.meshPicked);
+		
+	}
 
+	public void redo(){
+		this.actHist.redo();
+		this.setLocalAxes(this.meshPicked);
+	}
+	
 	public void detach() {
 		this.theParent.dispose();
 		this.disposeMaterials();
@@ -85,6 +106,7 @@ public class EditControl {
 		this.canvas.removeEventListener("pointerup", this::onPointerUp, false);
 		this.canvas.removeEventListener("pointermove", this::onPointerMove, false);
 		this.scene.unregisterBeforeRender(this::renderLoopProcess);
+		this.actHist = null;
 	}
 
 	boolean pDown = false;
@@ -167,22 +189,72 @@ public class EditControl {
 			if ((Mesh) pickResult.pickedMesh != this.prevOverMesh) {
 				if (this.prevOverMesh != null) {
 					this.prevOverMesh.visibility = 0;
+					restoreColor(this.prevOverMesh);
 				}
 				this.prevOverMesh = (Mesh) pickResult.pickedMesh;
-				this.prevOverMesh.visibility = 0.1;
+				//this.prevOverMesh.visibility = 0.1;
 				// setAxisVisiblity(0);
 				// ((Mesh) this.prevOverMesh.getChildren()[0]).visibility = 1;
+				if (this.rotEnabled){
+					((LinesMesh) this.prevOverMesh.getChildren()[0]).color = Color3.White();
+				}else{
+					((Mesh) this.prevOverMesh.getChildren()[0]).material = this.whiteMat;
+				}
+				if (this.prevOverMesh.name == "X"){
+					this.xaxis.color = Color3.White();
+				}else if (this.prevOverMesh.name == "Y"){
+					this.yaxis.color = Color3.White();
+				}else if (this.prevOverMesh.name == "Z"){
+					this.zaxis.color = Color3.White();
+				}else{
+//					this.xaxis.color = Color3.White();
+//					this.yaxis.color = Color3.White();
+//					this.zaxis.color = Color3.White();
+				}
+				
 
 			}
 		} else {
 			if (this.prevOverMesh != null) {
+				restoreColor(this.prevOverMesh);
 				// setAxisVisiblity(1);
-				this.prevOverMesh.visibility = 0;
-				this.prevOverMesh.renderOutline = false;
+				//this.prevOverMesh.visibility = 0;
 				this.prevOverMesh = null;
+				
 			}
 		}
 
+	}
+	
+	private void restoreColor(Mesh mesh){
+		Color3 col;
+		Material mat;
+		if (mesh.name == "X"){
+			col = Color3.Red();
+			mat = this.redMat;
+			this.xaxis.color = Color3.Red();
+		}else if (this.prevOverMesh.name == "Y"){
+			col = Color3.Green();
+			mat = this.greenMat;
+			this.yaxis.color = Color3.Green();
+		}else if (this.prevOverMesh.name == "Z"){
+			col = Color3.Blue();
+			mat = this.blueMat;
+			this.zaxis.color = Color3.Blue();
+		}else{
+			col = Color3.Yellow();
+			mat = this.yellowMat;
+//			this.xaxis.color = Color3.Red();
+//			this.yaxis.color = Color3.Green();
+//			this.zaxis.color = Color3.Blue();
+		}
+		
+		if (this.rotEnabled){
+			((LinesMesh) this.prevOverMesh.getChildren()[0]).color = col;
+		}else{
+			((Mesh) this.prevOverMesh.getChildren()[0]).material = mat;
+		}
+		
 	}
 
 	boolean editing = false;
@@ -194,8 +266,10 @@ public class EditControl {
 			editing = false;
 			setAxisVisiblity(1);
 			hideBaxis();
-			this.prevOverMesh.visibility=0;
+			//this.prevOverMesh.visibility=0;
+			restoreColor(this.prevOverMesh);
 			this.prevOverMesh = null;
+			this.actHist.add();
 			
 		}
 	}
@@ -449,6 +523,10 @@ public class EditControl {
 	}
 
 	private boolean transEnabled = false;
+	
+	public boolean isTranslationEnabled(){
+		return transEnabled;
+	}
 
 	public void enableTranslation() {
 		if (this.tX == null) {
@@ -477,6 +555,10 @@ public class EditControl {
 	}
 
 	private boolean rotEnabled = false;
+	
+	public boolean isRotationEnabled(){
+		return rotEnabled;
+	}
 
 	public void enableRotation() {
 		if (rX == null) {
@@ -505,7 +587,11 @@ public class EditControl {
 	}
 
 	private boolean scaleEnabled = false;
-
+	
+	public boolean isScaleEnabled(){
+		return scaleEnabled;
+	}
+	
 	public void enableScaling() {
 
 		if (this.sX == null) {
@@ -523,6 +609,8 @@ public class EditControl {
 			disableRotation();
 		}
 	}
+	
+	
 
 	public void disableScaling() {
 		if (scaleEnabled) {
@@ -573,9 +661,9 @@ public class EditControl {
 		yaxis.color = Color3.Green();
 		zaxis.color = Color3.Blue();
 
-		xaxis.renderingGroupId = 1;
-		yaxis.renderingGroupId = 1;
-		zaxis.renderingGroupId = 1;
+		xaxis.renderingGroupId = 2;
+		yaxis.renderingGroupId = 2;
+		zaxis.renderingGroupId = 2;
 
 	}
 
@@ -673,7 +761,7 @@ public class EditControl {
 		this.rX.material = this.redMat;
 		this.rY.material = this.greenMat;
 		this.rZ.material = this.blueMat;
-
+		
 		this.rX.parent = this.rCtl;
 		this.rY.parent = this.rCtl;
 		this.rZ.parent = this.rCtl;
@@ -710,6 +798,10 @@ public class EditControl {
 		rEndX.color = Color3.Red();
 		rEndY.color = Color3.Green();
 		rEndZ.color = Color3.Blue();
+		
+//		rEndX.material = this.redMat;
+//		rEndY.material = this.greenMat;
+//		rEndZ.material = this.blueMat;
 
 		rEndX.renderingGroupId = 1;
 		rEndY.renderingGroupId = 1;
@@ -767,7 +859,7 @@ public class EditControl {
 		this.sX.material = this.redMat;
 		this.sY.material = this.greenMat;
 		this.sZ.material = this.blueMat;
-		this.sAll.material = this.whiteMat;
+		this.sAll.material = this.yellowMat;
 		
 		this.sX.parent = this.sCtl;
 		this.sY.parent = this.sCtl;
@@ -810,7 +902,7 @@ public class EditControl {
 		this.sEndX.material = this.redMat;
 		this.sEndY.material = this.greenMat;
 		this.sEndZ.material = this.blueMat;
-		this.sEndAll.material = this.whiteMat;
+		this.sEndAll.material = this.yellowMat;
 
 		this.sEndX.renderingGroupId = 1;
 		this.sEndY.renderingGroupId = 1;
@@ -835,7 +927,7 @@ public class EditControl {
 		localZ = Vector3.TransformCoordinates(Axis.Z, meshMatrix).subtract(pos);
 		localRot = Vector3.RotationFromAxis(localX, localY, localZ);
 		if (local)
-			theParent.rotation.copyFrom(this.localRot);
+			this.theParent.rotation.copyFrom(this.localRot);
 	}
 
 	public void setLocal(boolean l) {
@@ -846,6 +938,10 @@ public class EditControl {
 			this.theParent.rotation.copyFrom(this.localRot);
 		else
 			this.theParent.rotation.copyFrom(Vector3.Zero());
+	}
+	
+	public boolean isLocal(){
+		return this.local;
 	}
 
 	public void setTransSnap(boolean s) {
@@ -912,4 +1008,95 @@ public class EditControl {
 		mat.specularColor = Color3.Black();
 		return mat;
 	}
+}
+class ActHist{
+	private AbstractMesh mesh;
+	private int lastMax = 10;
+	private Array<Act> acts = new Array();
+	private int last =-1;
+	private int current =-1;
+	
+	public ActHist( AbstractMesh mesh,int capacity){
+		this.mesh = mesh;
+		this.lastMax = capacity-1;
+		if (mesh.rotationQuaternion == null){
+			if (mesh.rotation != null){
+				mesh.rotationQuaternion = Quaternion.RotationYawPitchRoll(mesh.rotation.y, mesh.rotation.x, mesh.rotation.z);
+			}
+		}
+		add();
+	}
+	
+	public void setCapacity(int c){
+		if (c==0){
+			console.error("capacity should be more than zero");
+			return;
+		}
+		lastMax=c-1;
+		last=-1;
+		current=-1;
+		acts = new Array();
+		add();
+	}
+	
+	public void add(){
+		
+		Act act = new Act(this.mesh);
+		if (current < last){
+			for (int i = last;current<last;last--){
+				acts.pop();
+			}
+		}
+		if (last == lastMax){
+			acts.shift();
+			acts.push(act);
+		}else{
+			acts.push(act);
+			last++;
+			current++;
+		}
+		//debug();
+	}
+	
+	public void undo(){
+		if (current > 0){
+			current--;
+			((Act) acts.$get(current)).perform(this.mesh);
+		}
+		//debug();
+	}
+	
+	public void redo(){
+		if (current < last){
+			current++;
+			((Act) acts.$get(current)).perform(this.mesh);
+		}
+		//debug();
+	}
+	
+	private void debug(){
+		console.log("act len " +this.acts.length);
+		console.log("current " +current);
+		console.log("last " +last);
+	}
+}
+class Act{
+	
+	Vector3 p;
+	Quaternion r;
+	Vector3 s;
+	
+	public Act(AbstractMesh mesh){
+		this.p = mesh.position.Clone();
+		this.r = mesh.rotationQuaternion.Clone();
+		this.s = mesh.scaling.Clone();
+	}
+	
+	public void perform(AbstractMesh mesh){
+		mesh.position =this.p.Clone();
+		mesh.rotationQuaternion=this.r.Clone();
+		mesh.scaling =s.Clone();
+		
+	}
+	
 }

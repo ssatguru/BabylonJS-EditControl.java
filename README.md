@@ -17,9 +17,10 @@ Currenlty has the following features
 * Rotate 
 * Snap Rotate
 * Scale 
-* Local or Global  Translation,Rotation. (Scaling only in local axis)
+* Local or Global  Translation, Rotation. (Scaling only in local axis)
 * Create multiple instances in the same scene with each instance attached to a different mesh
 * Scale size of control
+* undo, redo
 
 For a demo head on over to [http://ssatguru.appspot.com/babylonjs/EditControl/webapp/index.html](http://ssatguru.appspot.com/babylonjs/EditControl/webapp/index.html)
 
@@ -45,7 +46,7 @@ editControl = new EditControl(box,camera, canvas, 0.75);
 editControl.enableTranslation();
 //set transalation sna value in meters
 editControl.setTransSnapValue(0.5);
-//set rotational snap valie in radians
+//set rotational snap value in radians
 editControl.setRotSnapValue(3.14/18);
 ```
 ## API
@@ -83,25 +84,54 @@ editControl.disableRotation();
 ```
 editControl.disableScaling();
 ```
-4) To turn on/off local/ global mode
+4) To check if Translation, Rotation or Scaling is enabled
+```
+editControl.isTranslationEnabled();
+```
+```
+editControl.isRotationEnabled();
+```
+```
+editControl.isScalingEnabled();
+```
+5) To turn on/off local/ global mode
 ```
 editControl.setLocal(boolean true/false);
 ```
-5) To trun on/off translation or rotation snapping
+6) To check if local/ global mode
+```
+editControl.isLocal();
+```
+7) To turn on/off translation or rotation snapping
 ```
 editControl.setTransSnap(boolean true/false);
 ```
 ```
 editControl.setRotSnap(boolean true/false);
 ```
-6) To set translation or Rotation snap values
+8) To set translation or Rotation snap values
 ```
 editControl.setTransSnapValue(number n in meters);
 ```
 ```
 editControl.setRotSnapValue(number n in radians);
 ```
-7) To switch edit control to another mesh
+9) To undo or redo
+```
+editControl.undo();
+```
+```
+editControl.redo();
+```
+10) To set undo count
+```
+editControl.setUndoCount(number count);
+```
+11) To check if user editing (moving,translating or scaling object)
+```
+editControl.isEditing();
+```
+12) To switch edit control to another mesh
 ```
 editControl.switchTo(Mesh mesh);
 ```
@@ -109,7 +139,7 @@ This quickly removes control from one mesh and attaches it to anotehr mesh.
 
 The translation, rotation, scaling mode is maintained.
 
-8) To detach from the mesh and clean up resources.
+13) To detach from the mesh and clean up resources.
 ```
 editControl.detach();
 ```

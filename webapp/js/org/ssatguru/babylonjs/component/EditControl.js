@@ -1,4 +1,4 @@
-"Generated from Java with JSweet 1.0.0-RC1 - http://www.jsweet.org";
+"Generated from Java with JSweet 1.0.0 - http://www.jsweet.org";
 var org;
 (function (org) {
     var ssatguru;
@@ -10,6 +10,7 @@ var org;
                 var Axis = BABYLON.Axis;
                 var Color3 = BABYLON.Color3;
                 var Mesh = BABYLON.Mesh;
+                var Quaternion = BABYLON.Quaternion;
                 var Space = BABYLON.Space;
                 var StandardMaterial = BABYLON.StandardMaterial;
                 var Vector3 = BABYLON.Vector3;
@@ -39,6 +40,7 @@ var org;
                         this.axesScale = scale;
                         this.scene = mesh.getScene();
                         this.mainCamera = camera;
+                        this.actHist = new ActHist(mesh, 10);
                         mesh.computeWorldMatrix(true);
                         this.theParent = new Mesh("EditControl", this.scene);
                         this.theParent.position = this.meshPicked.position;
@@ -65,6 +67,17 @@ var org;
                         this.meshPicked = mesh;
                         this.setLocalAxes(mesh);
                     };
+                    EditControl.prototype.setUndoCount = function (c) {
+                        this.actHist.setCapacity(c);
+                    };
+                    EditControl.prototype.undo = function () {
+                        this.actHist.undo();
+                        this.setLocalAxes(this.meshPicked);
+                    };
+                    EditControl.prototype.redo = function () {
+                        this.actHist.redo();
+                        this.setLocalAxes(this.meshPicked);
+                    };
                     EditControl.prototype.detach = function () {
                         var _this = this;
                         this.theParent.dispose();
@@ -73,6 +86,7 @@ var org;
                         this.canvas.removeEventListener("pointerup", function (evt) { return _this.onPointerUp(evt); }, false);
                         this.canvas.removeEventListener("pointermove", function (evt) { return _this.onPointerMove(evt); }, false);
                         this.scene.unregisterBeforeRender(function () { return _this.renderLoopProcess(); });
+                        this.actHist = null;
                     };
                     EditControl.prototype.onPointerDown = function (evt) {
                         var _this = this;
@@ -147,17 +161,62 @@ var org;
                             if ((pickResult.pickedMesh != this.prevOverMesh)) {
                                 if ((this.prevOverMesh != null)) {
                                     this.prevOverMesh.visibility = 0;
+                                    this.restoreColor(this.prevOverMesh);
                                 }
                                 this.prevOverMesh = pickResult.pickedMesh;
-                                this.prevOverMesh.visibility = 0.1;
+                                if ((this.rotEnabled)) {
+                                    this.prevOverMesh.getChildren()[0].color = Color3.White();
+                                }
+                                else {
+                                    this.prevOverMesh.getChildren()[0].material = this.whiteMat;
+                                }
+                                if ((this.prevOverMesh.name == "X")) {
+                                    this.xaxis.color = Color3.White();
+                                }
+                                else if ((this.prevOverMesh.name == "Y")) {
+                                    this.yaxis.color = Color3.White();
+                                }
+                                else if ((this.prevOverMesh.name == "Z")) {
+                                    this.zaxis.color = Color3.White();
+                                }
+                                else {
+                                }
                             }
                         }
                         else {
                             if ((this.prevOverMesh != null)) {
-                                this.prevOverMesh.visibility = 0;
-                                this.prevOverMesh.renderOutline = false;
+                                this.restoreColor(this.prevOverMesh);
                                 this.prevOverMesh = null;
                             }
+                        }
+                    };
+                    EditControl.prototype.restoreColor = function (mesh) {
+                        var col;
+                        var mat;
+                        if ((mesh.name == "X")) {
+                            col = Color3.Red();
+                            mat = this.redMat;
+                            this.xaxis.color = Color3.Red();
+                        }
+                        else if ((this.prevOverMesh.name == "Y")) {
+                            col = Color3.Green();
+                            mat = this.greenMat;
+                            this.yaxis.color = Color3.Green();
+                        }
+                        else if ((this.prevOverMesh.name == "Z")) {
+                            col = Color3.Blue();
+                            mat = this.blueMat;
+                            this.zaxis.color = Color3.Blue();
+                        }
+                        else {
+                            col = Color3.Yellow();
+                            mat = this.yellowMat;
+                        }
+                        if ((this.rotEnabled)) {
+                            this.prevOverMesh.getChildren()[0].color = col;
+                        }
+                        else {
+                            this.prevOverMesh.getChildren()[0].material = mat;
                         }
                     };
                     EditControl.prototype.onPointerUp = function (evt) {
@@ -167,8 +226,9 @@ var org;
                             this.editing = false;
                             this.setAxisVisiblity(1);
                             this.hideBaxis();
-                            this.prevOverMesh.visibility = 0;
+                            this.restoreColor(this.prevOverMesh);
                             this.prevOverMesh = null;
+                            this.actHist.add();
                         }
                     };
                     EditControl.prototype.onPointerMove = function (evt) {
@@ -397,6 +457,9 @@ var org;
                             this.sEndAll.visibility = v;
                         }
                     };
+                    EditControl.prototype.isTranslationEnabled = function () {
+                        return this.transEnabled;
+                    };
                     EditControl.prototype.enableTranslation = function () {
                         if ((this.tX == null)) {
                             this.createTransAxes();
@@ -419,6 +482,9 @@ var org;
                             this.transEnabled = false;
                         }
                     };
+                    EditControl.prototype.isRotationEnabled = function () {
+                        return this.rotEnabled;
+                    };
                     EditControl.prototype.enableRotation = function () {
                         if ((this.rX == null)) {
                             this.createRotAxes();
@@ -440,6 +506,9 @@ var org;
                             this.rEndZ.visibility = 0;
                             this.rotEnabled = false;
                         }
+                    };
+                    EditControl.prototype.isScaleEnabled = function () {
+                        return this.scaleEnabled;
                     };
                     EditControl.prototype.enableScaling = function () {
                         if ((this.sX == null)) {
@@ -490,9 +559,9 @@ var org;
                         this.xaxis.color = Color3.Red();
                         this.yaxis.color = Color3.Green();
                         this.zaxis.color = Color3.Blue();
-                        this.xaxis.renderingGroupId = 1;
-                        this.yaxis.renderingGroupId = 1;
-                        this.zaxis.renderingGroupId = 1;
+                        this.xaxis.renderingGroupId = 2;
+                        this.yaxis.renderingGroupId = 2;
+                        this.zaxis.renderingGroupId = 2;
                     };
                     EditControl.prototype.createPickPlane = function () {
                         this.pickPlane = Mesh.CreatePlane("axisPlane", 200, this.scene);
@@ -633,7 +702,7 @@ var org;
                         this.sX.material = this.redMat;
                         this.sY.material = this.greenMat;
                         this.sZ.material = this.blueMat;
-                        this.sAll.material = this.whiteMat;
+                        this.sAll.material = this.yellowMat;
                         this.sX.parent = this.sCtl;
                         this.sY.parent = this.sCtl;
                         this.sZ.parent = this.sCtl;
@@ -667,7 +736,7 @@ var org;
                         this.sEndX.material = this.redMat;
                         this.sEndY.material = this.greenMat;
                         this.sEndZ.material = this.blueMat;
-                        this.sEndAll.material = this.whiteMat;
+                        this.sEndAll.material = this.yellowMat;
                         this.sEndX.renderingGroupId = 1;
                         this.sEndY.renderingGroupId = 1;
                         this.sEndZ.renderingGroupId = 1;
@@ -695,6 +764,9 @@ var org;
                             this.theParent.rotation.copyFrom(this.localRot);
                         else
                             this.theParent.rotation.copyFrom(Vector3.Zero());
+                    };
+                    EditControl.prototype.isLocal = function () {
+                        return this.local;
                     };
                     EditControl.prototype.setTransSnap = function (s) {
                         this.snapT = s;
@@ -751,6 +823,83 @@ var org;
                     return EditControl;
                 })();
                 component.EditControl = EditControl;
+                var ActHist = (function () {
+                    function ActHist(mesh, capacity) {
+                        this.lastMax = 10;
+                        this.acts = new Array();
+                        this.last = -1;
+                        this.current = -1;
+                        this.mesh = mesh;
+                        this.lastMax = capacity - 1;
+                        if ((mesh.rotationQuaternion == null)) {
+                            if ((mesh.rotation != null)) {
+                                mesh.rotationQuaternion = Quaternion.RotationYawPitchRoll(mesh.rotation.y, mesh.rotation.x, mesh.rotation.z);
+                            }
+                        }
+                        this.add();
+                    }
+                    ActHist.prototype.setCapacity = function (c) {
+                        if ((c == 0)) {
+                            console.error("capacity should be more than zero");
+                            return;
+                        }
+                        this.lastMax = c - 1;
+                        this.last = -1;
+                        this.current = -1;
+                        this.acts = new Array();
+                        this.add();
+                    };
+                    ActHist.prototype.add = function () {
+                        var act = new Act(this.mesh);
+                        if ((this.current < this.last)) {
+                            for (var i = this.last; this.current < this.last; this.last--) {
+                                this.acts.pop();
+                            }
+                        }
+                        if ((this.last == this.lastMax)) {
+                            this.acts.shift();
+                            this.acts.push(act);
+                        }
+                        else {
+                            this.acts.push(act);
+                            this.last++;
+                            this.current++;
+                        }
+                    };
+                    ActHist.prototype.undo = function () {
+                        if ((this.current > 0)) {
+                            this.current--;
+                            this.acts[this.current].perform(this.mesh);
+                        }
+                    };
+                    ActHist.prototype.redo = function () {
+                        if ((this.current < this.last)) {
+                            this.current++;
+                            this.acts[this.current].perform(this.mesh);
+                        }
+                    };
+                    ActHist.prototype.debug = function () {
+                        console.log("act len " + this.acts.length);
+                        console.log("current " + this.current);
+                        console.log("last " + this.last);
+                    };
+                    return ActHist;
+                })();
+                component.ActHist = ActHist;
+                var Act = (function () {
+                    function Act(mesh) {
+                        this.p = mesh.position.clone();
+                        this.r = mesh.rotationQuaternion.clone();
+                        this.s = mesh.scaling.clone();
+                    }
+                    Act.prototype.perform = function (mesh) {
+                        mesh.position = this.p.clone();
+                        mesh.rotationQuaternion = this.r.clone();
+                        mesh.scaling = this.s.clone();
+                    };
+                    return Act;
+                })();
+                component.Act = Act;
             })(component = babylonjs.component || (babylonjs.component = {}));
         })(babylonjs = ssatguru.babylonjs || (ssatguru.babylonjs = {}));
     })(ssatguru = org.ssatguru || (org.ssatguru = {}));
