@@ -19,6 +19,7 @@ import def.babylonjs.babylon.Space;
 import def.babylonjs.babylon.StandardMaterial;
 import def.babylonjs.babylon.Vector3;
 import jsweet.dom.Event;
+import jsweet.dom.EventListener;
 import jsweet.dom.HTMLCanvasElement;
 import jsweet.dom.PointerEvent;
 import jsweet.lang.Array;
@@ -27,7 +28,7 @@ import jsweet.lang.Math;
 public class EditControl {
 
 	private Mesh meshPicked;
-	HTMLCanvasElement canvas;
+	private HTMLCanvasElement canvas;
 	private Scene scene;
 	private Camera mainCamera;
 	private Mesh theParent;
@@ -40,6 +41,8 @@ public class EditControl {
 	private double axesScale = 1;
 	private StandardMaterial redMat, greenMat, blueMat, whiteMat, yellowMat;
 	private ActHist actHist;
+	private Runnable renderer; 
+	private EventListener pointerdown,pointerup,pointermove;
 
 	public EditControl(Mesh mesh, Camera camera, HTMLCanvasElement canvas, double scale) {
 		this.meshPicked = mesh;
@@ -63,13 +66,19 @@ public class EditControl {
 		this.guideCtl.parent = this.theParent;
 		createPickPlane();
 		this.pickPlane.parent = this.theParent;
-
-		canvas.addEventListener("pointerdown", this::onPointerDown, false);
-		canvas.addEventListener("pointerup", this::onPointerUp, false);
-		canvas.addEventListener("pointermove", this::onPointerMove, false);
+		
+		
+		this.pointerdown = this::onPointerDown;
+		this.pointerup = this::onPointerUp;
+		this.pointermove = this::onPointerMove;
+		
+		canvas.addEventListener("pointerdown",  this.pointerdown, false);
+		canvas.addEventListener("pointerup",  this.pointerup, false);
+		canvas.addEventListener("pointermove",  this.pointermove, false);
+		
 		setLocalAxes(mesh);
-
-		this.scene.registerBeforeRender(this::renderLoopProcess);
+		this.renderer = this::renderLoopProcess;
+		this.scene.registerBeforeRender(this.renderer);
 	}
 
 	private void renderLoopProcess() {
@@ -102,12 +111,17 @@ public class EditControl {
 	}
 	
 	public void detach() {
+
+		this.canvas.removeEventListener("pointerdown", this.pointerdown, false);
+		this.canvas.removeEventListener("pointerup", this.pointerup, false);
+		this.canvas.removeEventListener("pointermove", this.pointermove, false);
+		this.scene.unregisterBeforeRender(this.renderer);
+		disposeAll();
+	}
+	
+	public void disposeAll(){
 		this.theParent.dispose();
 		this.disposeMaterials();
-		this.canvas.removeEventListener("pointerdown", this::onPointerDown, false);
-		this.canvas.removeEventListener("pointerup", this::onPointerUp, false);
-		this.canvas.removeEventListener("pointermove", this::onPointerMove, false);
-		this.scene.unregisterBeforeRender(this::renderLoopProcess);
 		this.actHist = null;
 	}
 
@@ -208,13 +222,7 @@ public class EditControl {
 					this.yaxis.color = Color3.White();
 				}else if (this.prevOverMesh.name == "Z"){
 					this.zaxis.color = Color3.White();
-				}else{
-//					this.xaxis.color = Color3.White();
-//					this.yaxis.color = Color3.White();
-//					this.zaxis.color = Color3.White();
 				}
-				
-
 			}
 		} else {
 			if (this.prevOverMesh != null) {
@@ -246,9 +254,6 @@ public class EditControl {
 		}else{
 			col = Color3.Yellow();
 			mat = this.yellowMat;
-//			this.xaxis.color = Color3.Red();
-//			this.yaxis.color = Color3.Green();
-//			this.zaxis.color = Color3.Blue();
 		}
 		
 		if (this.rotEnabled){
@@ -380,7 +385,7 @@ public class EditControl {
 	private void doScaling(Vector3 newPos) {
 
 		Vector3 ppm = this.prevPos.subtract(this.meshPicked.position);
-		Vector3 npm = newPos.subtract(this.meshPicked.position);
+		//Vector3 npm = newPos.subtract(this.meshPicked.position);
 		Vector3 diff = newPos.subtract(prevPos);
 		double r = diff.length() / ppm.length();
 		// double r = diff.length() / 10;
@@ -783,7 +788,8 @@ public class EditControl {
 		this.rY.isPickable = false;
 		this.rZ.isPickable = false;
 
-		double cl = d, cr = r / 8;
+		double cl = d;
+		//cr = r / 8;
 
 		rEndX = createCircle(cl / 2);
 		rEndY = rEndX.clone("");
@@ -801,9 +807,6 @@ public class EditControl {
 		rEndY.color = Color3.Green();
 		rEndZ.color = Color3.Blue();
 		
-//		rEndX.material = this.redMat;
-//		rEndY.material = this.greenMat;
-//		rEndZ.material = this.blueMat;
 
 		rEndX.renderingGroupId = 1;
 		rEndY.renderingGroupId = 1;
@@ -1014,7 +1017,7 @@ public class EditControl {
 class ActHist{
 	private AbstractMesh mesh;
 	private int lastMax = 10;
-	private Array<Act> acts = new Array();
+	private Array<Act> acts = new Array<Act>();
 	private int last =-1;
 	private int current =-1;
 	
@@ -1037,17 +1040,18 @@ class ActHist{
 		lastMax=c-1;
 		last=-1;
 		current=-1;
-		acts = new Array();
+		acts = new Array<Act>();
 		add();
 	}
 	
 	public void add(){
-		
 		Act act = new Act(this.mesh);
 		if (current < last){
-			for (int i = last;current<last;last--){
-				acts.pop();
-			}
+			acts.splice(current+1);
+			last=current;
+//			for (int i = last;current<last;last--){
+//				acts.pop();
+//			}
 		}
 		if (last == lastMax){
 			acts.shift();

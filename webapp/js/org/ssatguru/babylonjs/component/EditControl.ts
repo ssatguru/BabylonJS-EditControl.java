@@ -31,7 +31,7 @@ module org.ssatguru.babylonjs.component {
     export class EditControl {
         private meshPicked: Mesh;
 
-        canvas: HTMLCanvasElement;
+        private canvas: HTMLCanvasElement;
 
         private scene: Scene;
 
@@ -65,6 +65,14 @@ module org.ssatguru.babylonjs.component {
 
         private actHist: ActHist;
 
+        private renderer: () => void;
+
+        private pointerdown: EventListener;
+
+        private pointerup: EventListener;
+
+        private pointermove: EventListener;
+
         public constructor(mesh: Mesh, camera: Camera, canvas: HTMLCanvasElement, scale: number)  {
             this.meshPicked = mesh;
             this.canvas = canvas;
@@ -82,11 +90,15 @@ module org.ssatguru.babylonjs.component {
             this.guideCtl.parent = this.theParent;
             this.createPickPlane();
             this.pickPlane.parent = this.theParent;
-            canvas.addEventListener("pointerdown", (evt) => { return this.onPointerDown(evt) }, false);
-            canvas.addEventListener("pointerup", (evt) => { return this.onPointerUp(evt) }, false);
-            canvas.addEventListener("pointermove", (evt) => { return this.onPointerMove(evt) }, false);
+            this.pointerdown = (evt) => { return this.onPointerDown(evt) };
+            this.pointerup = (evt) => { return this.onPointerUp(evt) };
+            this.pointermove = (evt) => { return this.onPointerMove(evt) };
+            canvas.addEventListener("pointerdown", this.pointerdown, false);
+            canvas.addEventListener("pointerup", this.pointerup, false);
+            canvas.addEventListener("pointermove", this.pointermove, false);
             this.setLocalAxes(mesh);
-            this.scene.registerBeforeRender(() => { return this.renderLoopProcess() });
+            this.renderer = () => { return this.renderLoopProcess() };
+            this.scene.registerBeforeRender(this.renderer);
         }
 
         private renderLoopProcess()  {
@@ -118,12 +130,16 @@ module org.ssatguru.babylonjs.component {
         }
 
         public detach()  {
+            this.canvas.removeEventListener("pointerdown", this.pointerdown, false);
+            this.canvas.removeEventListener("pointerup", this.pointerup, false);
+            this.canvas.removeEventListener("pointermove", this.pointermove, false);
+            this.scene.unregisterBeforeRender(this.renderer);
+            this.disposeAll();
+        }
+
+        public disposeAll()  {
             this.theParent.dispose();
             this.disposeMaterials();
-            this.canvas.removeEventListener("pointerdown", (evt) => { return this.onPointerDown(evt) }, false);
-            this.canvas.removeEventListener("pointerup", (evt) => { return this.onPointerUp(evt) }, false);
-            this.canvas.removeEventListener("pointermove", (evt) => { return this.onPointerMove(evt) }, false);
-            this.scene.unregisterBeforeRender(() => { return this.renderLoopProcess() });
             this.actHist = null;
         }
 
@@ -203,7 +219,6 @@ module org.ssatguru.babylonjs.component {
                         this.yaxis.color = Color3.White();
                     } else if((this.prevOverMesh.name == "Z")) {
                         this.zaxis.color = Color3.White();
-                    } else {
                     }
                 }
             } else {
@@ -328,7 +343,6 @@ module org.ssatguru.babylonjs.component {
 
         private doScaling(newPos: Vector3)  {
             var ppm: Vector3 = this.prevPos.subtract(this.meshPicked.position);
-            var npm: Vector3 = newPos.subtract(this.meshPicked.position);
             var diff: Vector3 = newPos.subtract(this.prevPos);
             var r: number = diff.length() / ppm.length();
             if((this.axisPicked == this.sX)) {
@@ -688,7 +702,6 @@ module org.ssatguru.babylonjs.component {
             this.rY.isPickable = false;
             this.rZ.isPickable = false;
             var cl: number = d;
-            var cr: number = r / 8;
             this.rEndX = this.createCircle(cl / 2);
             this.rEndY = this.rEndX.clone("");
             this.rEndZ = this.rEndX.clone("");
@@ -902,7 +915,7 @@ module org.ssatguru.babylonjs.component {
 
         private lastMax: number = 10;
 
-        private acts: Array<Act> = new Array();
+        private acts: Array<Act> = new Array<Act>();
 
         private last: number = -1;
 
@@ -927,16 +940,15 @@ module org.ssatguru.babylonjs.component {
             this.lastMax = c - 1;
             this.last = -1;
             this.current = -1;
-            this.acts = new Array();
+            this.acts = new Array<Act>();
             this.add();
         }
 
         public add()  {
             var act: Act = new Act(this.mesh);
             if((this.current < this.last)) {
-                for(var i: number = this.last; this.current < this.last; this.last--) {
-                    this.acts.pop();
-                }
+                this.acts.splice(this.current + 1);
+                this.last = this.current;
             }
             if((this.last == this.lastMax)) {
                 this.acts.shift();

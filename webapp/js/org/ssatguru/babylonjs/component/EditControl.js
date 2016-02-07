@@ -51,11 +51,15 @@ var org;
                         this.guideCtl.parent = this.theParent;
                         this.createPickPlane();
                         this.pickPlane.parent = this.theParent;
-                        canvas.addEventListener("pointerdown", function (evt) { return _this.onPointerDown(evt); }, false);
-                        canvas.addEventListener("pointerup", function (evt) { return _this.onPointerUp(evt); }, false);
-                        canvas.addEventListener("pointermove", function (evt) { return _this.onPointerMove(evt); }, false);
+                        this.pointerdown = function (evt) { return _this.onPointerDown(evt); };
+                        this.pointerup = function (evt) { return _this.onPointerUp(evt); };
+                        this.pointermove = function (evt) { return _this.onPointerMove(evt); };
+                        canvas.addEventListener("pointerdown", this.pointerdown, false);
+                        canvas.addEventListener("pointerup", this.pointerup, false);
+                        canvas.addEventListener("pointermove", this.pointermove, false);
                         this.setLocalAxes(mesh);
-                        this.scene.registerBeforeRender(function () { return _this.renderLoopProcess(); });
+                        this.renderer = function () { return _this.renderLoopProcess(); };
+                        this.scene.registerBeforeRender(this.renderer);
                     }
                     EditControl.prototype.renderLoopProcess = function () {
                         this.setAxesScale();
@@ -81,13 +85,15 @@ var org;
                         this.setLocalAxes(this.meshPicked);
                     };
                     EditControl.prototype.detach = function () {
-                        var _this = this;
+                        this.canvas.removeEventListener("pointerdown", this.pointerdown, false);
+                        this.canvas.removeEventListener("pointerup", this.pointerup, false);
+                        this.canvas.removeEventListener("pointermove", this.pointermove, false);
+                        this.scene.unregisterBeforeRender(this.renderer);
+                        this.disposeAll();
+                    };
+                    EditControl.prototype.disposeAll = function () {
                         this.theParent.dispose();
                         this.disposeMaterials();
-                        this.canvas.removeEventListener("pointerdown", function (evt) { return _this.onPointerDown(evt); }, false);
-                        this.canvas.removeEventListener("pointerup", function (evt) { return _this.onPointerUp(evt); }, false);
-                        this.canvas.removeEventListener("pointermove", function (evt) { return _this.onPointerMove(evt); }, false);
-                        this.scene.unregisterBeforeRender(function () { return _this.renderLoopProcess(); });
                         this.actHist = null;
                     };
                     EditControl.prototype.onPointerDown = function (evt) {
@@ -180,8 +186,6 @@ var org;
                                 }
                                 else if ((this.prevOverMesh.name == "Z")) {
                                     this.zaxis.color = Color3.White();
-                                }
-                                else {
                                 }
                             }
                         }
@@ -319,7 +323,6 @@ var org;
                     };
                     EditControl.prototype.doScaling = function (newPos) {
                         var ppm = this.prevPos.subtract(this.meshPicked.position);
-                        var npm = newPos.subtract(this.meshPicked.position);
                         var diff = newPos.subtract(this.prevPos);
                         var r = diff.length() / ppm.length();
                         if ((this.axisPicked == this.sX)) {
@@ -646,7 +649,6 @@ var org;
                         this.rY.isPickable = false;
                         this.rZ.isPickable = false;
                         var cl = d;
-                        var cr = r / 8;
                         this.rEndX = this.createCircle(cl / 2);
                         this.rEndY = this.rEndX.clone("");
                         this.rEndZ = this.rEndX.clone("");
@@ -854,9 +856,8 @@ var org;
                     ActHist.prototype.add = function () {
                         var act = new Act(this.mesh);
                         if ((this.current < this.last)) {
-                            for (var i = this.last; this.current < this.last; this.last--) {
-                                this.acts.pop();
-                            }
+                            this.acts.splice(this.current + 1);
+                            this.last = this.current;
                         }
                         if ((this.last == this.lastMax)) {
                             this.acts.shift();
