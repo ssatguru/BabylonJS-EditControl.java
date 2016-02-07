@@ -254,9 +254,11 @@ var org;
                     EditControl.prototype.doTranslation = function (newPos) {
                         var diff = newPos.subtract(this.prevPos);
                         var dl = diff.length();
-                        var space = Space.WORLD;
+                        var space;
                         if ((this.local))
                             space = Space.LOCAL;
+                        else
+                            space = Space.WORLD;
                         if ((this.axisPicked == this.tX)) {
                             if ((this.local))
                                 dl = Vector3.Dot(diff, this.localX) / (this.localX.length() * this.meshPicked.scaling.x);
@@ -276,7 +278,10 @@ var org;
                                     this.snapX = 0;
                                 }
                             }
-                            this.meshPicked.translate(Axis.X, dl, space);
+                            if ((this.local))
+                                this.meshPicked.translate(Axis.X, dl, space);
+                            else
+                                this.meshPicked.position.x += dl;
                         }
                         else if ((this.axisPicked == this.tY)) {
                             if ((this.local))
@@ -297,7 +302,10 @@ var org;
                                     this.snapY = 0;
                                 }
                             }
-                            this.meshPicked.translate(Axis.Y, dl, space);
+                            if ((this.local))
+                                this.meshPicked.translate(Axis.Y, dl, space);
+                            else
+                                this.meshPicked.position.y += dl;
                         }
                         else if ((this.axisPicked == this.tZ)) {
                             if ((this.local))
@@ -318,7 +326,10 @@ var org;
                                     this.snapZ = 0;
                                 }
                             }
-                            this.meshPicked.translate(Axis.Z, dl, space);
+                            if ((this.local))
+                                this.meshPicked.translate(Axis.Z, dl, space);
+                            else
+                                this.meshPicked.position.z += dl;
                         }
                     };
                     EditControl.prototype.doScaling = function (newPos) {

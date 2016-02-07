@@ -297,8 +297,8 @@ module org.ssatguru.babylonjs.component {
         private doTranslation(newPos: Vector3)  {
             var diff: Vector3 = newPos.subtract(this.prevPos);
             var dl: number = diff.length();
-            var space: Space = Space.WORLD;
-            if((this.local)) space = Space.LOCAL;
+            var space: Space;
+            if((this.local)) space = Space.LOCAL; else space = Space.WORLD;
             if((this.axisPicked == this.tX)) {
                 if((this.local)) dl = Vector3.Dot(diff, this.localX) / (this.localX.length() * this.meshPicked.scaling.x); else dl = diff.x;
                 if((this.snapT)) {
@@ -311,7 +311,7 @@ module org.ssatguru.babylonjs.component {
                         this.snapX = 0;
                     }
                 }
-                this.meshPicked.translate(Axis.X, dl, space);
+                if((this.local)) this.meshPicked.translate(Axis.X, dl, space); else this.meshPicked.position.x+=dl;
             } else if((this.axisPicked == this.tY)) {
                 if((this.local)) dl = Vector3.Dot(diff, this.localY) / (this.localY.length() * this.meshPicked.scaling.y); else dl = diff.y;
                 if((this.snapT)) {
@@ -324,7 +324,7 @@ module org.ssatguru.babylonjs.component {
                         this.snapY = 0;
                     }
                 }
-                this.meshPicked.translate(Axis.Y, dl, space);
+                if((this.local)) this.meshPicked.translate(Axis.Y, dl, space); else this.meshPicked.position.y+=dl;
             } else if((this.axisPicked == this.tZ)) {
                 if((this.local)) dl = Vector3.Dot(diff, this.localZ) / (this.localZ.length() * this.meshPicked.scaling.z); else dl = diff.z;
                 if((this.snapT)) {
@@ -337,7 +337,7 @@ module org.ssatguru.babylonjs.component {
                         this.snapZ = 0;
                     }
                 }
-                this.meshPicked.translate(Axis.Z, dl, space);
+                if((this.local)) this.meshPicked.translate(Axis.Z, dl, space); else this.meshPicked.position.z+=dl;
             }
         }
 

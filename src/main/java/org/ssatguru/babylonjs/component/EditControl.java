@@ -311,11 +311,13 @@ public class EditControl {
 
 	private void doTranslation(Vector3 newPos) {
 
-		Vector3 diff = newPos.subtract(prevPos);
+		Vector3 diff = newPos.subtract(this.prevPos);
 		double dl = diff.length();
-		Space space = Space.WORLD;
+		Space space;
 		if (local)
 			space = Space.LOCAL;
+		else
+			space = Space.WORLD;
 		// in local take care of scaling - meshes uploaded may have
 		// scale other than 1.
 		if (this.axisPicked == this.tX) {
@@ -337,7 +339,10 @@ public class EditControl {
 					snapX = 0;
 				}
 			}
+			
+			if(local) 
 			this.meshPicked.translate(Axis.X, dl, space);
+			else this.meshPicked.position.x += dl;
 		} else if (this.axisPicked == this.tY) {
 			if (local)
 				dl = Vector3.Dot(diff, localY) / (localY.length() * this.meshPicked.scaling.y);
@@ -357,7 +362,9 @@ public class EditControl {
 					snapY = 0;
 				}
 			}
+			if (local)
 			this.meshPicked.translate(Axis.Y, dl, space);
+			else this.meshPicked.position.y += dl;
 		} else if (this.axisPicked == this.tZ) {
 			if (local)
 				dl = Vector3.Dot(diff, localZ) / (localZ.length() * this.meshPicked.scaling.z);
@@ -377,7 +384,9 @@ public class EditControl {
 					snapZ = 0;
 				}
 			}
+			if (local)
 			this.meshPicked.translate(Axis.Z, dl, space);
+			else this.meshPicked.position.z += dl;
 		}
 
 	}
