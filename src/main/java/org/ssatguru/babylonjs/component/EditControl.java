@@ -91,6 +91,7 @@ public class EditControl {
 		mesh.computeWorldMatrix(true);
 		this.meshPicked = mesh;
 		this.setLocalAxes(mesh);
+		this.actHist = new ActHist(mesh,10);
 	}
 	
 	public void setUndoCount(int c){

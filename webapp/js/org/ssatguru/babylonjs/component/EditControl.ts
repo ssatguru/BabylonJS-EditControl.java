@@ -111,6 +111,7 @@ module org.ssatguru.babylonjs.component {
             mesh.computeWorldMatrix(true);
             this.meshPicked = mesh;
             this.setLocalAxes(mesh);
+            this.actHist = new ActHist(mesh, 10);
         }
 
         public setUndoCount(c: number)  {
