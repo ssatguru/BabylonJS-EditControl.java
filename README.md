@@ -10,7 +10,7 @@ This EditControl is similar to those widgets.
 
 You can embed this in your Babylonjs application to provid those same capabilities.
 
-Currenlty has the following features
+Currently has the following features
 
 * Translate 
 * Snap Translate
