@@ -8,7 +8,7 @@ All 3d editors provide a widget to translate, rotate or scale 3d objects in the 
 
 This EditControl is similar to those widgets.
 
-You can embed this in your Babylonjs application to provid those same capabilities.
+You can embed this in your Babylonjs application to provide those same capabilities.
 
 Currently has the following features
 
@@ -137,7 +137,7 @@ editControl.isEditing();
 ```
 editControl.switchTo(Mesh mesh);
 ```
-This quickly removes control from one mesh and attaches it to anotehr mesh.
+This quickly removes control from one mesh and attaches it to another mesh.
 
 The translation, rotation, scaling mode is maintained.
 
