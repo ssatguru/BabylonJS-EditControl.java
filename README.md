@@ -3,7 +3,7 @@ An edit control for use in [BabylonJS](http://www.babylonjs.com/) (a 3D HTML Web
 
 It has been written in Java and transpiled to Javascript using [JSweet](http://www.jsweet.org/),  a Java to Typescript to Javscript transpiler.
 
-You can find both typescript and javascript auto generated code  [here](https://github.com/ssatguru/Babylonjs-EditControl/tree/master/webapp/js/org/ssatguru/babylonjs/component).
+You can find both typescript and javascript, auto generated code,  [here](https://github.com/ssatguru/Babylonjs-EditControl/tree/master/webapp/js/org/ssatguru/babylonjs/component).
 
 ## About
 All 3d editors provide a widget to translate, rotate or scale 3d objects in the editor.
@@ -30,8 +30,8 @@ For a demo head on over to [http://ssatguru.appspot.com/babylonjs/EditControl/we
 
 1) add the following dependencies 
  ```
-<script src="https://cdn.jsdelivr.net/handjs/1.3.8/hand.min.js"></script>
-<script src="https://cdn.jsdelivr.net/babylonjs/2.2/babylon.min.js"></script>
+<script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
+<script src="https://cdn.jsdelivr.net/babylonjs/2-3/babylon.min.js"></script>
 <script src="EditControl.js"></script>
 ```
 You can find the "EditControl.js" here
@@ -135,7 +135,13 @@ editControl.setUndoCount(number count);
 ```
 editControl.isEditing();
 ```
-12) To switch edit control to another mesh
+returns true if the use is in the process of editing
+12) To check if the pointer is over the edit control
+```
+editControl.isPointeOver();
+```
+returns true if the pointer is over the edit control
+13) To switch edit control to another mesh
 ```
 editControl.switchTo(Mesh mesh);
 ```
@@ -143,7 +149,7 @@ This quickly removes control from one mesh and attaches it to another mesh.
 
 The translation, rotation, scaling mode is maintained.
 
-13) To detach from the mesh and clean up resources.
+14) To detach from the mesh and clean up resources.
 ```
 editControl.detach();
 ```
