@@ -136,11 +136,13 @@ editControl.setUndoCount(number count);
 editControl.isEditing();
 ```
 returns true if the use is in the process of editing
+
 12) To check if the pointer is over the edit control
 ```
 editControl.isPointeOver();
 ```
 returns true if the pointer is over the edit control
+
 13) To switch edit control to another mesh
 ```
 editControl.switchTo(Mesh mesh);
