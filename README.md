@@ -1,7 +1,9 @@
 # BabylonJS-EditControl
 An edit control for use in [BabylonJS](http://www.babylonjs.com/) (a 3D HTML Webgl framework)  applications
 
-It has been written in Java and transpiled to Javascript using [JSweet](http://www.jsweet.org/)  a Java to Typescript to Javscript transpiler. (You can find both typescript and javascript auto generated code  [here](https://github.com/ssatguru/Babylonjs-EditControl/tree/master/webapp/js/org/ssatguru/babylonjs/component) in this repository) .
+It has been written in Java and transpiled to Javascript using [JSweet](http://www.jsweet.org/),  a Java to Typescript to Javscript transpiler.
+
+You can find both typescript and javascript auto generated code  [here](https://github.com/ssatguru/Babylonjs-EditControl/tree/master/webapp/js/org/ssatguru/babylonjs/component).
 
 ## About
 All 3d editors provide a widget to translate, rotate or scale 3d objects in the editor.
@@ -17,7 +19,7 @@ Currently has the following features
 * Rotate 
 * Snap Rotate
 * Scale 
-* Local or Global  Translation, Rotation. (Scaling only in local axis)
+* Local or Global  Translation and Rotation. (Scaling only in local axis)
 * Create multiple instances in the same scene with each instance attached to a different mesh
 * Scale size of control
 * undo, redo
