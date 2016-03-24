@@ -190,6 +190,12 @@ module org.ssatguru.babylonjs.component {
 
         private prevOverMesh: Mesh;
 
+        private pointerIsOver: boolean = false;
+
+        public isPointerOver() : boolean {
+            return this.pointerIsOver;
+        }
+
         private onPointerOver()  {
             if((this.pDown)) return;
             var pickResult: PickingInfo = this.scene.pick(this.scene.pointerX, this.scene.pointerY, (mesh) => {
@@ -204,6 +210,7 @@ module org.ssatguru.babylonjs.component {
             }, null, this.mainCamera);
             if((pickResult.hit)) {
                 if((<Mesh>pickResult.pickedMesh != this.prevOverMesh)) {
+                    this.pointerIsOver = true;
                     if((this.prevOverMesh != null)) {
                         this.prevOverMesh.visibility = 0;
                         this.restoreColor(this.prevOverMesh);
@@ -223,6 +230,7 @@ module org.ssatguru.babylonjs.component {
                     }
                 }
             } else {
+                this.pointerIsOver = false;
                 if((this.prevOverMesh != null)) {
                     this.restoreColor(this.prevOverMesh);
                     this.prevOverMesh = null;
@@ -367,7 +375,12 @@ module org.ssatguru.babylonjs.component {
             }
         }
 
+        eulerian: boolean = false;
+
         private doRotation(newPos: Vector3)  {
+            if((this.meshPicked.rotation != null && this.meshPicked.rotationQuaternion == null)) {
+                this.eulerian = true;
+            } else this.eulerian = false;
             var cN: Vector3 = Vector3.TransformNormal(Axis.Z, this.mainCamera.getWorldMatrix());
             if((this.axisPicked == this.rX)) {
                 var angle: number = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.position, cN);
@@ -415,7 +428,10 @@ module org.ssatguru.babylonjs.component {
                 } else this.meshPicked.rotate(new Vector3(0, 0, cN.z), angle, Space.WORLD);
                 this.setLocalAxes(this.meshPicked);
             }
-            this.meshPicked.rotation = this.meshPicked.rotationQuaternion.toEulerAngles();
+            if((this.eulerian)) {
+                this.meshPicked.rotation = this.meshPicked.rotationQuaternion.toEulerAngles();
+                this.meshPicked.rotationQuaternion = null;
+            }
         }
 
         private getPosOnPickPlane() : Vector3 {

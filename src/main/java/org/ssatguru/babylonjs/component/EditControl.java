@@ -183,6 +183,11 @@ public class EditControl {
 	}
 
 	private Mesh prevOverMesh;
+	private boolean pointerIsOver=false;
+	
+	public boolean isPointerOver(){
+		return pointerIsOver;
+	}
 	
 	private void onPointerOver() {
 		if (this.pDown)
@@ -203,15 +208,16 @@ public class EditControl {
 			return false;
 		} , null, this.mainCamera);
 		if (pickResult.hit) {
+			//if we are still over the same axis then donot process again
 			if ((Mesh) pickResult.pickedMesh != this.prevOverMesh) {
+				pointerIsOver= true;
+				//check if we slide over directly from one axis to another
+				// if yes lets turn off the previous axis
 				if (this.prevOverMesh != null) {
 					this.prevOverMesh.visibility = 0;
 					restoreColor(this.prevOverMesh);
 				}
 				this.prevOverMesh = (Mesh) pickResult.pickedMesh;
-				//this.prevOverMesh.visibility = 0.1;
-				// setAxisVisiblity(0);
-				// ((Mesh) this.prevOverMesh.getChildren()[0]).visibility = 1;
 				if (this.rotEnabled){
 					((LinesMesh) this.prevOverMesh.getChildren()[0]).color = Color3.White();
 				}else{
@@ -226,6 +232,7 @@ public class EditControl {
 				}
 			}
 		} else {
+			pointerIsOver= false;
 			if (this.prevOverMesh != null) {
 				restoreColor(this.prevOverMesh);
 				// setAxisVisiblity(1);
@@ -274,7 +281,6 @@ public class EditControl {
 			editing = false;
 			setAxisVisiblity(1);
 			hideBaxis();
-			//this.prevOverMesh.visibility=0;
 			restoreColor(this.prevOverMesh);
 			this.prevOverMesh = null;
 			this.actHist.add();
@@ -430,8 +436,11 @@ public class EditControl {
 		}
 
 	}
-
+	boolean eulerian = false;
 	private void doRotation(Vector3 newPos) {
+		if (this.meshPicked.rotation != null && this.meshPicked.rotationQuaternion == null){
+			eulerian = true;
+		}else eulerian = false;
 		Vector3 cN = Vector3.TransformNormal(Axis.Z, this.mainCamera.getWorldMatrix());
 		if (this.axisPicked == this.rX) {
 			double angle = getAngle(prevPos, newPos, this.meshPicked.position, cN);
@@ -494,9 +503,13 @@ public class EditControl {
 				this.meshPicked.rotate(new Vector3(0, 0, cN.z), angle, Space.WORLD);
 			setLocalAxes(this.meshPicked);
 		}
-		// babylonjs reset euler to zero when rotate() is used.
+		// babylonjs allows only euler or quetrnion not both
+		//if the caller was using euler then restore it before returning.
 		// restore euler value for those expecting it
-		this.meshPicked.rotation = this.meshPicked.rotationQuaternion.toEulerAngles();
+		if (eulerian){
+			this.meshPicked.rotation = this.meshPicked.rotationQuaternion.toEulerAngles();
+			this.meshPicked.rotationQuaternion = null;
+		}
 
 	}
 

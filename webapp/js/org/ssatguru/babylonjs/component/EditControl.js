@@ -25,6 +25,7 @@ var org;
                         this.axesLen = 0.4;
                         this.axesScale = 1;
                         this.pDown = false;
+                        this.pointerIsOver = false;
                         this.editing = false;
                         this.snapX = 0;
                         this.snapY = 0;
@@ -32,6 +33,7 @@ var org;
                         this.snapRX = 0;
                         this.snapRY = 0;
                         this.snapRZ = 0;
+                        this.eulerian = false;
                         this.transEnabled = false;
                         this.rotEnabled = false;
                         this.scaleEnabled = false;
@@ -147,6 +149,9 @@ var org;
                         var canvas = can;
                         camera.detachControl(canvas);
                     };
+                    EditControl.prototype.isPointerOver = function () {
+                        return this.pointerIsOver;
+                    };
                     EditControl.prototype.onPointerOver = function () {
                         var _this = this;
                         if ((this.pDown))
@@ -168,6 +173,7 @@ var org;
                         }, null, this.mainCamera);
                         if ((pickResult.hit)) {
                             if ((pickResult.pickedMesh != this.prevOverMesh)) {
+                                this.pointerIsOver = true;
                                 if ((this.prevOverMesh != null)) {
                                     this.prevOverMesh.visibility = 0;
                                     this.restoreColor(this.prevOverMesh);
@@ -191,6 +197,7 @@ var org;
                             }
                         }
                         else {
+                            this.pointerIsOver = false;
                             if ((this.prevOverMesh != null)) {
                                 this.restoreColor(this.prevOverMesh);
                                 this.prevOverMesh = null;
@@ -370,6 +377,11 @@ var org;
                         }
                     };
                     EditControl.prototype.doRotation = function (newPos) {
+                        if ((this.meshPicked.rotation != null && this.meshPicked.rotationQuaternion == null)) {
+                            this.eulerian = true;
+                        }
+                        else
+                            this.eulerian = false;
                         var cN = Vector3.TransformNormal(Axis.Z, this.mainCamera.getWorldMatrix());
                         if ((this.axisPicked == this.rX)) {
                             var angle = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.position, cN);
@@ -437,7 +449,10 @@ var org;
                                 this.meshPicked.rotate(new Vector3(0, 0, cN.z), angle, Space.WORLD);
                             this.setLocalAxes(this.meshPicked);
                         }
-                        this.meshPicked.rotation = this.meshPicked.rotationQuaternion.toEulerAngles();
+                        if ((this.eulerian)) {
+                            this.meshPicked.rotation = this.meshPicked.rotationQuaternion.toEulerAngles();
+                            this.meshPicked.rotationQuaternion = null;
+                        }
                     };
                     EditControl.prototype.getPosOnPickPlane = function () {
                         var _this = this;
