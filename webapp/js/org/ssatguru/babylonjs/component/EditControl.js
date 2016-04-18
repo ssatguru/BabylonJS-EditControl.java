@@ -45,7 +45,7 @@ var org;
                         this.actHist = new ActHist(mesh, 10);
                         mesh.computeWorldMatrix(true);
                         this.theParent = new Mesh("EditControl", this.scene);
-                        this.theParent.position = this.meshPicked.position;
+                        this.theParent.position = this.meshPicked.absolutePosition;
                         this.theParent.visibility = 0;
                         this.theParent.isPickable = false;
                         this.createMaterials(this.scene);
@@ -65,7 +65,7 @@ var org;
                     }
                     EditControl.prototype.renderLoopProcess = function () {
                         this.setAxesScale();
-                        this.theParent.position = this.meshPicked.position;
+                        this.theParent.position = this.meshPicked.absolutePosition;
                         this.onPointerOver();
                     };
                     EditControl.prototype.switchTo = function (mesh) {
@@ -384,7 +384,7 @@ var org;
                             this.eulerian = false;
                         var cN = Vector3.TransformNormal(Axis.Z, this.mainCamera.getWorldMatrix());
                         if ((this.axisPicked == this.rX)) {
-                            var angle = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.position, cN);
+                            var angle = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.absolutePosition, cN);
                             if ((this.snapR)) {
                                 this.snapRX += angle;
                                 angle = 0;
@@ -406,7 +406,7 @@ var org;
                             this.setLocalAxes(this.meshPicked);
                         }
                         else if ((this.axisPicked == this.rY)) {
-                            var angle = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.position, cN);
+                            var angle = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.absolutePosition, cN);
                             if ((this.snapR)) {
                                 this.snapRY += angle;
                                 angle = 0;
@@ -428,7 +428,7 @@ var org;
                             this.setLocalAxes(this.meshPicked);
                         }
                         else if ((this.axisPicked == this.rZ)) {
-                            var angle = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.position, cN);
+                            var angle = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.absolutePosition, cN);
                             if ((this.snapR)) {
                                 this.snapRZ += angle;
                                 angle = 0;
@@ -779,7 +779,7 @@ var org;
                     };
                     EditControl.prototype.setLocalAxes = function (mesh) {
                         var meshMatrix = mesh.getWorldMatrix();
-                        var pos = mesh.position;
+                        var pos = mesh.absolutePosition;
                         this.localX = Vector3.TransformCoordinates(Axis.X, meshMatrix).subtract(pos);
                         this.localY = Vector3.TransformCoordinates(Axis.Y, meshMatrix).subtract(pos);
                         this.localZ = Vector3.TransformCoordinates(Axis.Z, meshMatrix).subtract(pos);

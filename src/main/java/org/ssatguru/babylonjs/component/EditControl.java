@@ -57,7 +57,8 @@ public class EditControl {
 		mesh.computeWorldMatrix(true);
 
 		theParent = new Mesh("EditControl", this.scene);
-		theParent.position = this.meshPicked.position;
+		//theParent.position = this.meshPicked.position;
+		theParent.position = this.meshPicked.absolutePosition;
 		theParent.visibility = 0;
 		theParent.isPickable = false;
 
@@ -83,7 +84,8 @@ public class EditControl {
 
 	private void renderLoopProcess() {
 		setAxesScale();
-		this.theParent.position = this.meshPicked.position;
+		//this.theParent.position = this.meshPicked.position;
+		this.theParent.position = this.meshPicked.absolutePosition;
 		onPointerOver();
 	}
 
@@ -443,7 +445,7 @@ public class EditControl {
 		}else eulerian = false;
 		Vector3 cN = Vector3.TransformNormal(Axis.Z, this.mainCamera.getWorldMatrix());
 		if (this.axisPicked == this.rX) {
-			double angle = getAngle(prevPos, newPos, this.meshPicked.position, cN);
+			double angle = getAngle(prevPos, newPos, this.meshPicked.absolutePosition, cN);
 			if (snapR) {
 				snapRX += angle;
 				angle = 0;
@@ -463,7 +465,7 @@ public class EditControl {
 				this.meshPicked.rotate(new Vector3(cN.x, 0, 0), angle, Space.WORLD);
 			setLocalAxes(this.meshPicked);
 		} else if (this.axisPicked == this.rY) {
-			double angle = getAngle(prevPos, newPos, this.meshPicked.position, cN);
+			double angle = getAngle(prevPos, newPos, this.meshPicked.absolutePosition, cN);
 			if (snapR) {
 				snapRY += angle;
 				angle = 0;
@@ -483,7 +485,7 @@ public class EditControl {
 				this.meshPicked.rotate(new Vector3(0, cN.y, 0), angle, Space.WORLD);
 			setLocalAxes(this.meshPicked);
 		} else if (this.axisPicked == this.rZ) {
-			double angle = getAngle(prevPos, newPos, this.meshPicked.position, cN);
+			double angle = getAngle(prevPos, newPos, this.meshPicked.absolutePosition, cN);
 			if (snapR) {
 				snapRZ += angle;
 				angle = 0;
@@ -945,11 +947,11 @@ public class EditControl {
 	}
 
 	private Vector3 localX, localY, localZ, localRot;
-
+	
 	private void setLocalAxes(Mesh mesh) {
 		Matrix meshMatrix = mesh.getWorldMatrix();
 		//Matrix meshMatrix = mesh.computeWorldMatrix(true);
-		Vector3 pos = mesh.position;
+		Vector3 pos = mesh.absolutePosition;
 		localX = Vector3.TransformCoordinates(Axis.X, meshMatrix).subtract(pos);
 		localY = Vector3.TransformCoordinates(Axis.Y, meshMatrix).subtract(pos);
 		localZ = Vector3.TransformCoordinates(Axis.Z, meshMatrix).subtract(pos);

@@ -82,7 +82,7 @@ module org.ssatguru.babylonjs.component {
             this.actHist = new ActHist(mesh, 10);
             mesh.computeWorldMatrix(true);
             this.theParent = new Mesh("EditControl", this.scene);
-            this.theParent.position = this.meshPicked.position;
+            this.theParent.position = this.meshPicked.absolutePosition;
             this.theParent.visibility = 0;
             this.theParent.isPickable = false;
             this.createMaterials(this.scene);
@@ -103,7 +103,7 @@ module org.ssatguru.babylonjs.component {
 
         private renderLoopProcess()  {
             this.setAxesScale();
-            this.theParent.position = this.meshPicked.position;
+            this.theParent.position = this.meshPicked.absolutePosition;
             this.onPointerOver();
         }
 
@@ -383,7 +383,7 @@ module org.ssatguru.babylonjs.component {
             } else this.eulerian = false;
             var cN: Vector3 = Vector3.TransformNormal(Axis.Z, this.mainCamera.getWorldMatrix());
             if((this.axisPicked == this.rX)) {
-                var angle: number = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.position, cN);
+                var angle: number = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.absolutePosition, cN);
                 if((this.snapR)) {
                     this.snapRX+=angle;
                     angle = 0;
@@ -398,7 +398,7 @@ module org.ssatguru.babylonjs.component {
                 } else this.meshPicked.rotate(new Vector3(cN.x, 0, 0), angle, Space.WORLD);
                 this.setLocalAxes(this.meshPicked);
             } else if((this.axisPicked == this.rY)) {
-                var angle: number = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.position, cN);
+                var angle: number = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.absolutePosition, cN);
                 if((this.snapR)) {
                     this.snapRY+=angle;
                     angle = 0;
@@ -413,7 +413,7 @@ module org.ssatguru.babylonjs.component {
                 } else this.meshPicked.rotate(new Vector3(0, cN.y, 0), angle, Space.WORLD);
                 this.setLocalAxes(this.meshPicked);
             } else if((this.axisPicked == this.rZ)) {
-                var angle: number = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.position, cN);
+                var angle: number = EditControl.getAngle(this.prevPos, newPos, this.meshPicked.absolutePosition, cN);
                 if((this.snapR)) {
                     this.snapRZ+=angle;
                     angle = 0;
@@ -847,7 +847,7 @@ module org.ssatguru.babylonjs.component {
 
         private setLocalAxes(mesh: Mesh)  {
             var meshMatrix: Matrix = mesh.getWorldMatrix();
-            var pos: Vector3 = mesh.position;
+            var pos: Vector3 = mesh.absolutePosition;
             this.localX = Vector3.TransformCoordinates(Axis.X, meshMatrix).subtract(pos);
             this.localY = Vector3.TransformCoordinates(Axis.Y, meshMatrix).subtract(pos);
             this.localZ = Vector3.TransformCoordinates(Axis.Z, meshMatrix).subtract(pos);
